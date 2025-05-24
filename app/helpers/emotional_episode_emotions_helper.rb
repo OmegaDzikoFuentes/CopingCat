@@ -1,0 +1,2 @@
+module EmotionalEpisodeEmotionsHelper
+end

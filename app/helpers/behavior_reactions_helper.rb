@@ -1,0 +1,2 @@
+module BehaviorReactionsHelper
+end

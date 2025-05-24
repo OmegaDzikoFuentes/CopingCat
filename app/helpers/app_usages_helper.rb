@@ -1,0 +1,2 @@
+module AppUsagesHelper
+end
