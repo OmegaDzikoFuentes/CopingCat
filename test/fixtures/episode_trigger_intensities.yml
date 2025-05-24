@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  emotional_episode: one
+  trigger: one
+  weight: 1
+
+two:
+  emotional_episode: two
+  trigger: two
+  weight: 1

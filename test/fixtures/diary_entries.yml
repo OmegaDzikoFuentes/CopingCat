@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  emotion: one
+  context: one
+  notes: MyText
+  intensity: 1
+  location: MyString
+  activity: MyString
+  entry_time: 2025-05-24 11:15:37
+
+two:
+  user: two
+  emotion: two
+  context: two
+  notes: MyText
+  intensity: 1
+  location: MyString
+  activity: MyString
+  entry_time: 2025-05-24 11:15:37

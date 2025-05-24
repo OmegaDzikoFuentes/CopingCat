@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  target_trigger: one
+  target_emotion: one
+  status: 1
+
+two:
+  user: two
+  target_trigger: two
+  target_emotion: two
+  status: 1

@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  emotional_episode: one
+  name: MyString
+  severity: 1
+
+two:
+  emotional_episode: two
+  name: MyString
+  severity: 1
