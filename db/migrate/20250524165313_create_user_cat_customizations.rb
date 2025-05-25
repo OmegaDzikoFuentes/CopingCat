@@ -1,4 +1,4 @@
-class CreateUserCatCustomizations < ActiveRecord::Migration[8.0]
+class CreateUserCatCustomizations < ActiveRecord::Migration[7.1]
   def change
     create_table :user_cat_customizations do |t|
       t.references :user, null: false, foreign_key: true

@@ -1,4 +1,4 @@
-class CreateTriggers < ActiveRecord::Migration[8.0]
+class CreateTriggers < ActiveRecord::Migration[7.1]
   def change
     create_table :triggers do |t|
       t.string :name

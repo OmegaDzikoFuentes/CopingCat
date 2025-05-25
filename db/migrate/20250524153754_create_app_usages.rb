@@ -1,4 +1,4 @@
-class CreateAppUsages < ActiveRecord::Migration[8.0]
+class CreateAppUsages < ActiveRecord::Migration[7.1]
   def change
     create_table :app_usages do |t|
       t.references :user, null: false, foreign_key: true

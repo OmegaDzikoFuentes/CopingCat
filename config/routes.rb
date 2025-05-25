@@ -1,12 +1,15 @@
 # config/routes.rb
 Rails.application.routes.draw do
+  devise_for :users
   get "social/Controller"
   get "game/Controller"
   # Devise routes for user authentication
-  devise_for :users
+  # devise_for :users
   
   # Root route
   root 'analytics#dashboard'
+
+  
   
   # Main application routes
   resources :emotions do
@@ -95,6 +98,7 @@ Rails.application.routes.draw do
   
   # Analytics and reporting routes
   get 'analytics', to: 'analytics#dashboard'
+  get '/analytics/dashboard', to: 'analytics#dashboard', as: 'analytics_dashboard'
   get 'analytics/emotions', to: 'analytics#emotions'
   get 'analytics/triggers', to: 'analytics#triggers'
   get 'analytics/patterns', to: 'analytics#patterns'
@@ -210,6 +214,8 @@ Rails.application.routes.draw do
       patch :decline
     end
   end
+
+  get '/social/challenges', to: 'social#challenges', as: 'social_challenges'
   
   # Notification management
   resources :notifications, only: [:index, :show, :update] do

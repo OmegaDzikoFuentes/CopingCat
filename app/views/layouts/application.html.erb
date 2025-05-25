@@ -56,7 +56,7 @@
       }
       
       @keyframes pawFloat {
-        0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.1; }
+        0% , 100% { transform: translateY(0) rotate(0deg); opacity: 0.1; }
         50% { transform: translateY(-50px) rotate(180deg); opacity: 0.3; }
       }
     </style>
@@ -82,10 +82,17 @@
             <% end %>
             
             <div class="relative">
-              <span class="text-white text-sm">
-                Streak: <%= current_user.current_streak %> days 🔥
-              </span>
-            </div>
+  <% if current_user %>
+    <span class="text-white text-sm">
+      Streak: <%= current_user.current_streak %> days 🔥
+    </span>
+  <% else %>
+    <span class="text-white text-sm">
+      Please log in to see your streak.
+    </span>
+  <% end %>
+</div>
+
             
             <%= link_to destroy_user_session_path, method: :delete, class: "text-white hover:text-purple-200" do %>
               Sign Out

@@ -1,4 +1,4 @@
-class CreateEpisodeTriggerIntensities < ActiveRecord::Migration[8.0]
+class CreateEpisodeTriggerIntensities < ActiveRecord::Migration[7.1]
   def change
     create_table :episode_trigger_intensities do |t|
       t.references :emotional_episode, null: false, foreign_key: true

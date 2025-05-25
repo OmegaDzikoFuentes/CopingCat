@@ -1,4 +1,4 @@
-class CreateEmotionalEpisodeEmotions < ActiveRecord::Migration[8.0]
+class CreateEmotionalEpisodeEmotions < ActiveRecord::Migration[7.1]
   def change
     create_table :emotional_episode_emotions do |t|
       t.references :emotional_episode, null: false, foreign_key: true

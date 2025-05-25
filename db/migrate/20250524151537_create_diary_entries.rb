@@ -1,4 +1,4 @@
-class CreateDiaryEntries < ActiveRecord::Migration[8.0]
+class CreateDiaryEntries < ActiveRecord::Migration[7.1]
   def change
     create_table :diary_entries do |t|
       t.references :user, null: false, foreign_key: true

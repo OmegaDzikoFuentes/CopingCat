@@ -1,4 +1,4 @@
-class CreateEpisodeTags < ActiveRecord::Migration[8.0]
+class CreateEpisodeTags < ActiveRecord::Migration[7.1]
   def change
     create_table :episode_tags do |t|
       t.references :emotional_episode, null: false, foreign_key: true
