@@ -1,0 +1,40 @@
+<div class="min-h-screen relative">
+  <!-- Three.js Canvas -->
+  <canvas id="catCanvas" class="absolute inset-0 w-full h-full"></canvas>
+  
+  <!-- Welcome Screen -->
+  <div class="relative z-10 min-h-screen flex flex-col justify-center items-center p-6">
+    <div class="glass-effect rounded-3xl p-8 max-w-md w-full text-center">
+      <div class="text-6xl mb-4 animate-bounce">😸</div>
+      <h1 class="text-4xl font-bold text-white mb-4">
+        Hello, <%= @user.name %>!
+      </h1>
+      <p class="text-white/80 text-lg mb-8">
+        Im your Coping Cat, here to help you navigate your feelings today!
+      </p>
+      
+      <!-- Display wellness score and streak -->
+      <div class="flex justify-around mb-8 text-white">
+        <div class="text-center">
+          <div class="text-2xl font-bold"><%= @user.wellness_score %></div>
+          <div class="text-sm opacity-80">Wellness Score</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold"><%= @user.current_streak %></div>
+          <div class="text-sm opacity-80">Day Streak 🔥</div>
+        </div>
+      </div>
+      
+      <%= link_to game_questions_path, 
+          class: "bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 shadow-lg" do %>
+        Let's Begin! 🐾
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initThreeJS();
+  });
+</script>

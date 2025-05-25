@@ -1,0 +1,53 @@
+<div class="min-h-screen relative">
+  <!-- Three.js Canvas -->
+  <canvas id="catCanvas" class="absolute inset-0 w-full h-full"></canvas>
+  
+  <!-- Question Bubbles Screen -->
+  <div class="relative z-10 min-h-screen flex flex-col justify-center items-center p-6">
+    <div class="text-center mb-8">
+      <h2 class="text-3xl font-bold text-white mb-4">How are you feeling today?</h2>
+      <p class="text-white/80">Tap what resonates with you right now</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl w-full">
+      <%= link_to game_emotion_mapping_path(question_type: 'triggered'), 
+          class: "emotion-bubble glass-effect rounded-2xl p-6 text-white hover:text-purple-100 bubble-float block text-center" do %>
+        <div class="text-4xl mb-3">⚡</div>
+        <div class="font-semibold text-lg">Feeling Triggered?</div>
+        <div class="text-sm opacity-80">Something set me off today</div>
+      <% end %>
+      
+      <%= link_to game_emotion_mapping_path(question_type: 'overwhelmed'), 
+          class: "emotion-bubble glass-effect rounded-2xl p-6 text-white hover:text-purple-100 bubble-float block text-center" do %>
+        <div class="text-4xl mb-3">🌊</div>
+        <div class="font-semibold text-lg">Feeling Overwhelmed?</div>
+        <div class="text-sm opacity-80">Too much is happening</div>
+      <% end %>
+      
+      <%= link_to game_emotion_mapping_path(question_type: 'disconnected'), 
+          class: "emotion-bubble glass-effect rounded-2xl p-6 text-white hover:text-purple-100 bubble-float block text-center" do %>
+        <div class="text-4xl mb-3">🌙</div>
+        <div class="font-semibold text-lg">Feeling Disconnected?</div>
+        <div class="text-sm opacity-80">I feel distant from others</div>
+      <% end %>
+      
+      <%= link_to game_emotion_mapping_path(question_type: 'need_breath'), 
+          class: "emotion-bubble glass-effect rounded-2xl p-6 text-white hover:text-purple-100 bubble-float block text-center" do %>
+        <div class="text-4xl mb-3">🫁</div>
+        <div class="font-semibold text-lg">Need a Deep Breath?</div>
+        <div class="text-sm opacity-80">Let us pause together</div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initThreeJS();
+    
+    // Make cat more animated for this screen
+    if (cat) {
+      cat.scale.set(1.2, 1.2, 1.2);
+    }
+  });
+</script>

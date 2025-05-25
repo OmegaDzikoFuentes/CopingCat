@@ -1,28 +1,195 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Coping Cat" %></title>
+    <title>Coping Cat - Your Well-being Companion</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
-    <%= yield :head %>
-
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
-
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+      * { font-family: 'Poppins', sans-serif; }
+      
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      
+      .glass-effect {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .bubble-float {
+        animation: float 3s ease-in-out infinite;
+      }
+      
+      .bubble-float:nth-child(2) { animation-delay: -1s; }
+      .bubble-float:nth-child(3) { animation-delay: -2s; }
+      .bubble-float:nth-child(4) { animation-delay: -0.5s; }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+      
+      .emotion-bubble {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .emotion-bubble:hover {
+        transform: scale(1.05) translateY(-5px);
+        box-shadow: 0 20px 40px rgba(139, 92, 246, 0.4);
+      }
+      
+      .paw-print {
+        position: absolute;
+        opacity: 0.1;
+        animation: pawFloat 8s ease-in-out infinite;
+      }
+      
+      @keyframes pawFloat {
+        0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.1; }
+        50% { transform: translateY(-50px) rotate(180deg); opacity: 0.3; }
+      }
+    </style>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="gradient-bg min-h-screen">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-effect">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center">
+            <%= link_to root_path, class: "text-white font-bold text-xl" do %>
+              😸 Coping Cat
+            <% end %>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <%= link_to analytics_dashboard_path, class: "text-white hover:text-purple-200" do %>
+              📊 Analytics
+            <% end %>
+            <%= link_to social_challenges_path, class: "text-white hover:text-purple-200" do %>
+              🏆 Challenges
+            <% end %>
+            
+            <div class="relative">
+              <span class="text-white text-sm">
+                Streak: <%= current_user.current_streak %> days 🔥
+              </span>
+            </div>
+            
+            <%= link_to destroy_user_session_path, method: :delete, class: "text-white hover:text-purple-200" do %>
+              Sign Out
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Floating Paw Prints -->
+    <div class="paw-print top-10 left-10 text-4xl">🐾</div>
+    <div class="paw-print top-32 right-20 text-3xl" style="animation-delay: -2s;">🐾</div>
+    <div class="paw-print bottom-20 left-1/4 text-5xl" style="animation-delay: -4s;">🐾</div>
+    <div class="paw-print bottom-32 right-10 text-2xl" style="animation-delay: -6s;">🐾</div>
+
+    <main class="pt-16">
+      <%= yield %>
+    </main>
+    
+    <!-- Global JavaScript -->
+    <script>
+      // Global Three.js setup
+      let scene, camera, renderer, cat, mixer;
+      
+      function initThreeJS(canvasId = 'catCanvas') {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 0);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 5, 5);
+        scene.add(directionalLight);
+
+        createSimpleCat();
+        camera.position.z = 5;
+        animate();
+      }
+      
+      function createSimpleCat() {
+        const group = new THREE.Group();
+        
+        // Cat body
+        const bodyGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+        const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xff8c42 });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.scale.set(1, 0.8, 0.6);
+        group.add(body);
+        
+        // Cat head
+        const headGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+        const head = new THREE.Mesh(headGeometry, bodyMaterial);
+        head.position.y = 1;
+        group.add(head);
+        
+        // Ears
+        const earGeometry = new THREE.ConeGeometry(0.2, 0.4, 8);
+        const leftEar = new THREE.Mesh(earGeometry, bodyMaterial);
+        leftEar.position.set(-0.3, 1.4, 0.1);
+        const rightEar = new THREE.Mesh(earGeometry, bodyMaterial);
+        rightEar.position.set(0.3, 1.4, 0.1);
+        group.add(leftEar, rightEar);
+        
+        // Tail
+        const tailGeometry = new THREE.CylinderGeometry(0.1, 0.05, 1.5, 8);
+        const tail = new THREE.Mesh(tailGeometry, bodyMaterial);
+        tail.position.set(0, 0, -0.8);
+        tail.rotation.x = Math.PI / 4;
+        group.add(tail);
+        
+        cat = group;
+        cat.position.y = -1;
+        scene.add(cat);
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        if (cat) {
+          cat.position.y = -1 + Math.sin(Date.now() * 0.001) * 0.1;
+          cat.rotation.y += 0.005;
+        }
+        
+        if (mixer) mixer.update(0.01);
+        renderer.render(scene, camera);
+      }
+
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        if (camera && renderer) {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+      });
+    </script>
   </body>
 </html>

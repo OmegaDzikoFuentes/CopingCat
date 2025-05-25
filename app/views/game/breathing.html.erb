@@ -1,0 +1,197 @@
+<div class="min-h-screen relative overflow-hidden">
+  <!-- Three.js Canvas -->
+  <canvas id="catCanvas" class="absolute inset-0 w-full h-full"></canvas>
+  
+  <!-- Breathing Exercise Screen -->
+  <div class="relative z-10 min-h-screen flex flex-col justify-center items-center p-6">
+    <div class="glass-effect rounded-3xl p-8 max-w-lg w-full text-center">
+      <h2 class="text-3xl font-bold text-white mb-6">Deep Breathing Exercise</h2>
+      <p class="text-white/80 mb-8">Follow the breathing circle and let us calm down together</p>
+      
+      <!-- Breathing Circle -->
+      <div class="relative mx-auto mb-8" style="width: 200px; height: 200px;">
+        <div id="breathingCircle" class="absolute inset-0 rounded-full border-4 border-white/30 flex items-center justify-center transition-all duration-4000 ease-in-out">
+          <div class="text-white font-bold text-lg" id="breathingText">Ready?</div>
+        </div>
+        
+        <!-- Breathing guide dots -->
+        <div class="absolute inset-0">
+          <div class="breathing-dot" style="top: 0; left: 50%; transform: translateX(-50%);"></div>
+          <div class="breathing-dot" style="top: 50%; right: 0; transform: translateY(-50%);"></div>
+          <div class="breathing-dot" style="bottom: 0; left: 50%; transform: translateX(-50%);"></div>
+          <div class="breathing-dot" style="top:: 50%; left: 0; transform: translateY(-50%);"></div>
+        </div>
+      </div>
+      
+      <!-- Controls -->
+      <div class="space-y-4 mb-6">
+        <div class="flex justify-center space-x-4">
+          <button id="startBreathing" onclick="startBreathingExercise()" 
+                  class="bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors">
+            🫁 Start Breathing
+          </button>
+          <button id="stopBreathing" onclick="stopBreathingExercise()" 
+                  class="bg-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-600 transition-colors hidden">
+            ⏹️ Stop
+          </button>
+        </div>
+        
+        <div class="text-white">
+          <label class="block mb-2">Breathing Pace:</label>
+          <select id="breathingPace" class="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white">
+            <option value="4">Slow (4 seconds)</option>
+            <option value="6" selected>Normal (6 seconds)</option>
+            <option value="8">Deep (8 seconds)</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Session Info -->
+      <div class="bg-white/10 rounded-xl p-4 mb-6">
+        <div class="text-white text-sm">
+          <div>Session: <span id="sessionTime">0:00</span></div>
+          <div>Breaths: <span id="breathCount">0</span></div>
+        </div>
+      </div>
+      
+      <!-- Back Button -->
+      <%= link_to :back, class: "text-white/80 hover:text-white underline" do %>
+        ← Back to Strategy
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+  let breathingActive = false;
+  let breathingInterval;
+  let sessionStart;
+  let breathCount = 0;
+  let sessionTimer;
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    initThreeJS();
+    
+    // Make cat breathe along
+    if (cat) {
+      cat.scale.set(0.8, 0.8, 0.8);
+    }
+  });
+  
+  function startBreathingExercise() {
+    if (breathingActive) return;
+    
+    breathingActive = true;
+    sessionStart = Date.now();
+    breathCount = 0;
+    
+    const startBtn = document.getElementById('startBreathing');
+    const stopBtn = document.getElementById('stopBreathing');
+    const circle = document.getElementById('breathingCircle');
+    const text = document.getElementById('breathingText');
+    const paceSelect = document.getElementById('breathingPace');
+    
+    startBtn.classList.add('hidden');
+    stopBtn.classList.remove('hidden');
+    paceSelect.disabled = true;
+    
+    const pace = parseInt(paceSelect.value) * 1000; // Convert to milliseconds
+    
+    // Start session timer
+    sessionTimer = setInterval(updateSessionTime, 1000);
+    
+    let phase = 0; // 0: inhale, 1: hold, 2: exhale, 3: hold
+    const phases = ['Breathe In', 'Hold', 'Breathe Out', 'Hold'];
+    
+    function breathingCycle() {
+      if (!breathingActive) return;
+      
+      text.textContent = phases[phase];
+      
+      // Visual feedback
+      switch(phase) {
+        case 0: // Inhale
+          circle.style.transform = 'scale(1.5)';
+          circle.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+          if (cat) cat.scale.set(1.0, 1.0, 1.0);
+          break;
+        case 1: // Hold (inhale)
+          circle.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+          break;
+        case 2: // Exhale
+          circle.style.transform = 'scale(1)';
+          circle.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+          if (cat) cat.scale.set(0.8, 0.8, 0.8);
+          breathCount++;
+          document.getElementById('breathCount').textContent = breathCount;
+          break;
+        case 3: // Hold (exhale)
+          circle.style.backgroundColor = 'rgba(168, 85, 247, 0.2)';
+          break;
+      }
+      
+      phase = (phase + 1) % 4;
+      breathingInterval = setTimeout(breathingCycle, pace);
+    }
+    
+    breathingCycle();
+  }
+  
+  function stopBreathingExercise() {
+    breathingActive = false;
+    clearTimeout(breathingInterval);
+    clearInterval(sessionTimer);
+    
+    const startBtn = document.getElementById('startBreathing');
+    const stopBtn = document.getElementById('stopBreathing');
+    const circle = document.getElementById('breathingCircle');
+    const text = document.getElementById('breathingText');
+    const paceSelect = document.getElementById('breathingPace');
+    
+    startBtn.classList.remove('hidden');
+    stopBtn.classList.add('hidden');
+    paceSelect.disabled = false;
+    
+    // Reset visual state
+    circle.style.transform = 'scale(1)';
+    circle.style.backgroundColor = 'transparent';
+    text.textContent = 'Well done! 🌟';
+    
+    if (cat) cat.scale.set(0.8, 0.8, 0.8);
+    
+    // Show completion message
+    setTimeout(() => {
+      const sessionDuration = Math.floor((Date.now() - sessionStart) / 1000);
+      alert(`Great job! You completed ${breathCount} breaths in ${Math.floor(sessionDuration/60)}:${(sessionDuration%60).toString().padStart(2,'0')}. You should feel more relaxed now! 😌`);
+    }, 1000);
+  }
+  
+  function updateSessionTime() {
+    if (!breathingActive) return;
+    
+    const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    document.getElementById('sessionTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+</script>
+
+<style>
+   {
+    transition: all 4s ease-in-out;
+  }
+  
+  .breathing-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50% ;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0% , 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+</style>

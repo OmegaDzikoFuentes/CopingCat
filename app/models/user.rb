@@ -1,42 +1,93 @@
 class User < ApplicationRecord
-    has_many :diary_entries, dependent: :destroy
+    # Devise authentication
+    devise :database_authenticatable, :registerable,
+           :recoverable, :rememberable, :validatable
+  
+    # Associations
     has_many :emotional_episodes, dependent: :destroy
-    has_many :contexts, dependent: :destroy
-    has_many :trigger_patterns, dependent: :destroy
-    has_many :user_goals, dependent: :destroy
+    has_many :diary_entries, dependent: :destroy
     has_many :app_usages, dependent: :destroy
+    has_many :strategy_usage_logs, dependent: :destroy
+    has_many :user_challenges, dependent: :destroy
+    has_many :challenges, through: :user_challenges
+    has_many :contexts, dependent: :destroy
+    has_many :user_goals, dependent: :destroy
+    has_many :trigger_patterns, dependent: :destroy
     has_many :prediction_feedbacks, dependent: :destroy
+  
+    # Cat customization
+    belongs_to :cat, optional: true
+    has_many :cat_customizations, dependent: :destroy
     has_one :cat_customization, class_name: 'UserCatCustomization', dependent: :destroy
     accepts_nested_attributes_for :cat_customization
-    
+  
+    # Validations
     validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-    validates :name, length: { maximum: 100 }
+    validates :name, presence: true, length: { maximum: 100 }
+    validates :cat_model, presence: true
     validates :gender, inclusion: { in: ['Male', 'Female', 'Other', ''] }, allow_blank: true
     validates :occupation, length: { maximum: 100 }
     validates :age, numericality: { greater_than: 0 }, allow_nil: true
-    
-    # Serialize lifestyle as JSON if using PostgreSQL jsonb or text field
+  
+    # Serialize lifestyle (if applicable)
     serialize :lifestyle, JSON if column_names.include?('lifestyle')
-    
+  
+    # Callbacks
+    before_create :assign_default_cat
+  
+    # Wellness methods
+    def wellness_score
+      recent_episodes = emotional_episodes.where(created_at: 7.days.ago..Time.current)
+      return 50 if recent_episodes.empty?
+  
+      avg_intensity = recent_episodes.average(:intensity)
+      strategy_usage = strategy_usage_logs.where(created_at: 7.days.ago..Time.current).count
+  
+      base_score = 100 - (avg_intensity * 10)
+      usage_bonus = [strategy_usage * 2, 20].min
+  
+      [base_score + usage_bonus, 100].min.round
+    end
+  
+    def current_streak
+      return 0 unless app_usages.any?
+  
+      streak = 0
+      date = Date.current
+  
+      while app_usages.where(created_at: date.beginning_of_day..date.end_of_day).exists?
+        streak += 1
+        date = date.yesterday
+      end
+  
+      streak
+    end
+  
     # Analytics methods
     def engagement_score(date = Date.current)
       AppUsage.daily_engagement_score(self, date)
     end
-    
+  
     def active_goals_count
       user_goals.active_goals.count
     end
-    
+  
     def prediction_accuracy
       PredictionFeedback.accuracy_rate(self)
     end
-
+  
     def assign_random_cat
-        update(cat_model: Cat.random_cat.model_filename)
+      update(cat_model: Cat.random_cat.model_filename)
     end
-
+  
     def current_cat_config
-        cat_customization || create_cat_customization
+      cat_customization || create_cat_customization
     end
-    
+  
+    private
+  
+    def assign_default_cat
+      self.cat_model ||= Cat.where(category: 'default').sample&.model_filename || 'default_cat.glb'
+    end
   end
+  

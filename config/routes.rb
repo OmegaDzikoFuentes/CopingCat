@@ -1,5 +1,7 @@
 # config/routes.rb
 Rails.application.routes.draw do
+  get "social/Controller"
+  get "game/Controller"
   # Devise routes for user authentication
   devise_for :users
   

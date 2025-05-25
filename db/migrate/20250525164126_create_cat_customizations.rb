@@ -1,0 +1,7 @@
+class CreateCatCustomizations < ActiveRecord::Migration[8.0]
+  def change
+    create_table :cat_customizations do |t|
+      t.timestamps
+    end
+  end
+end

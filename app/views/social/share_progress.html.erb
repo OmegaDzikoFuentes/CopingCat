@@ -1,0 +1,137 @@
+<div class="min-h-screen bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
+  <div class="container mx-auto px-6 py-8">
+    <div class="max-w-2xl mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-white mb-4">🎉 Share Your Progress</h1>
+        <p class="text-white/80">Celebrate your wellness journey with others</p>
+      </div>
+      
+      <!-- Progress Card -->
+      <div class="glass-effect rounded-3xl p-8 mb-8" id="shareCard">
+        <div class="text-center">
+          <div class="text-6xl mb-4">😸✨</div>
+          <h2 class="text-2xl font-bold text-white mb-6">My Wellness Journey</h2>
+          
+          <div class="grid grid-cols-2 gap-6 mb-8">
+            <div class="bg-white/10 rounded-2xl p-4">
+              <div class="text-3xl font-bold text-green-400"><%= @wellness_score %></div>
+              <div class="text-white/80">Wellness Score</div>
+            </div>
+            <div class="bg-white/10 rounded-2xl p-4">
+              <div class="text-3xl font-bold text-orange-400"><%= @streak %></div>
+              <div class="text-white/80">Day Streak 🔥</div>
+            </div>
+          </div>
+          
+          <% if @favorite_strategy %>
+            <div class="bg-white/10 rounded-2xl p-4 mb-6">
+              <div class="text-white font-semibold mb-2">💪 My Go-To Strategy</div>
+              <div class="text-white/80">"<%= @favorite_strategy.name %>"</div>
+            </div>
+          <% end %>
+          
+          <div class="text-white/60 text-sm">
+            Powered by Coping Cat 🐱
+          </div>
+        </div>
+      </div>
+      
+      <!-- Share Options -->
+      <div class="space-y-4 mb-8">
+        <button onclick="shareToSocial('twitter')" 
+                class="w-full bg-blue-500 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2">
+          <span>🐦</span>
+          <span>Share on Twitter</span>
+        </button>
+        
+        <button onclick="shareToSocial('facebook')" 
+                class="w-full bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-800 transition-colors flex items-center justify-center space-x-2">
+          <span>📘</span>
+          <span>Share on Facebook</span>
+        </button>
+        
+        <button onclick="copyToClipboard()" 
+                class="w-full bg-gray-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2">
+          <span>📋</span>
+          <span>Copy Link</span>
+        </button>
+        
+        <button onclick="downloadImage()" 
+                class="w-full bg-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2">
+          <span>📸</span>
+          <span>Download Image</span>
+        </button>
+      </div>
+      
+      <!-- Back Button -->
+      <div class="text-center">
+        <%= link_to analytics_dashboard_path, 
+            class: "text-white/80 hover:text-white underline" do %>
+          ← Back to Analytics
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  function shareToSocial(platform) {
+    const text = `I'm on a ${<%= @streak %>} day wellness streak with a score of ${<%= @wellness_score %>}/100! 🌟 Taking care of my mental health with @CopingCat 😸 #MentalHealthMatters #WellnessJourney`;
+    const url = window.location.origin;
+    
+    let shareUrl;
+    switch(platform) {
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
+        break;
+    }
+    
+    if (shareUrl) {
+      window.open(shareUrl, '_blank', 'width=600,height=400');
+    }
+  }
+  
+  function copyToClipboard() {
+    const text = `Check out my wellness progress! ${<%= @streak %>} day streak, ${<%= @wellness_score %>}/100 wellness score! 🌟 ${window.location.origin}`;
+    
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('📋 Progress text copied to clipboard!');
+      });
+    } else {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('📋 Progress text copied to clipboard!');
+    }
+  }
+  
+  function downloadImage() {
+    const card = document.getElementById('shareCard');
+    
+    html2canvas(card, {
+      backgroundColor: null,
+      scale: 2,
+      logging: false
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `wellness-progress-${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+      
+      alert('📸 Progress image downloaded successfully!');
+    }).catch(err => {
+      console.error('Error generating image:', err);
+      alert('❌ Sorry, there was an error generating the image.');
+    });
+  }
+</script>

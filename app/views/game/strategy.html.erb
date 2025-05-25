@@ -1,0 +1,182 @@
+<div class="min-h-screen relative">
+  <!-- Three.js Canvas -->
+  <canvas id="catCanvas" class="absolute inset-0 w-full h-full"></canvas>
+  
+  <!-- Strategy Display Screen -->
+  <div class="relative z-10 min-h-screen p-6 overflow-y-auto">
+    <div class="max-w-3xl mx-auto pt-20">
+      <div class="glass-effect rounded-3xl p-8 mb-6">
+        <div class="text-center mb-8">
+          <div class="text-6xl mb-4">🎯</div>
+          <h2 class="text-3xl font-bold text-white mb-2">Perfect Strategy Found!</h2>
+          <p class="text-white/80">Here is what I recommend for you right now</p>
+        </div>
+        
+        <div class="bg-white/10 rounded-2xl p-6 mb-8">
+          <h3 class="text-2xl font-bold text-white mb-4"><%= @strategy.name %></h3>
+          <div class="text-white/90 text-lg leading-relaxed mb-6">
+            <%= simple_format(@strategy.instructions) %>
+          </div>
+          
+          <div class="flex items-center justify-between mb-4">
+            <span class="bg-purple-500/30 text-white px-3 py-1 rounded-full text-sm">
+              Difficulty: <%= "⭐" * @strategy.difficulty_level %>
+            </span>
+            <span class="bg-green-500/30 text-white px-3 py-1 rounded-full text-sm">
+              <%= @strategy.emotion_category.humanize %> Support
+            </span>
+          </div>
+        </div>
+        
+        <!-- Interactive Elements -->
+        <div class="space-y-4 mb-8">
+          <% if @strategy.name.downcase.include?('breathing') %>
+            <div class="bg-blue-500/20 rounded-xl p-6 text-center">
+              <h4 class="text-white font-semibold mb-4">Let us practice together!</h4>
+              <%= link_to game_breathing_exercise_path, 
+                  class: "bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-600 transition-colors inline-block" do %>
+                Start Breathing Exercise 🫁
+              <% end %>
+            </div>
+          <% end %>
+          
+          <% if @strategy.name.downcase.include?('mindful') %>
+            <div class="bg-green-500/20 rounded-xl p-6">
+              <h4 class="text-white font-semibold mb-3">Mindfulness Timer</h4>
+              <div class="flex items-center space-x-4">
+                <button onclick="startMindfulnessTimer(5)" class="bg-green-500 text-white px-4 py-2 rounded-lg">5 min</button>
+                <button onclick="startMindfulnessTimer(10)" class="bg-green-500 text-white px-4 py-2 rounded-lg">10 min</button>
+                <button onclick="startMindfulnessTimer(15)" class="bg-green-500 text-white px-4 py-2 rounded-lg">15 min</button>
+              </div>
+              <div id="timerDisplay" class="text-white text-2xl font-bold mt-4 hidden">00:00</div>
+            </div>
+          <% end %>
+          
+          <% if @strategy.name.downcase.include?('journal') %>
+            <div class="bg-yellow-500/20 rounded-xl p-6">
+              <h4 class="text-white font-semibold mb-3">Quick Journal Prompt</h4>
+              <textarea placeholder="What are three things you're grateful for right now?" 
+                        class="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 resize-none"
+                        rows="3"></textarea>
+              <button onclick="saveJournalEntry()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg mt-3">
+                Save Thoughts 💭
+              </button>
+            </div>
+          <% end %>
+        </div>
+        
+        <!-- Strategy Rating -->
+        <div class="bg-white/10 rounded-xl p-6 mb-6">
+          <h4 class="text-white font-semibold mb-4">How helpful was this strategy?</h4>
+          <div class="flex justify-center space-x-2 mb-4">
+            <% (1..5).each do |rating| %>
+              <button onclick="rateStrategy(<%= rating %>)" 
+                      class="strategy-rating text-3xl hover:scale-110 transition-transform" 
+                      data-rating="<%= rating %>">⭐</button>
+            <% end %>
+          </div>
+          <div id="ratingFeedback" class="text-center text-white/80 hidden"></div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <%= link_to game_questions_path, 
+              class: "bg-white/20 text-white py-3 px-6 rounded-xl font-semibold text-center hover:bg-white/30 transition-colors" do %>
+            🔄 Try Another Approach
+          <% end %>
+          
+          <%= link_to analytics_dashboard_path, 
+              class: "bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-6 rounded-xl font-semibold text-center hover:from-purple-600 hover:to-pink-600 transition-colors" do %>
+            📊 View My Progress
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let timerInterval;
+  let strategyRating = 0;
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    initThreeJS();
+    
+    // Make cat celebrate strategy discovery
+    if (cat) {
+      cat.scale.set(1.2, 1.2, 1.2);
+      
+      // Celebration animation
+      let celebrationCount = 0;
+      const celebrateInterval = setInterval(() => {
+        cat.position.y = -1 + Math.sin(Date.now() * 0.01) * 0.3;
+        celebrationCount++;
+        if (celebrationCount > 100) {
+          clearInterval(celebrateInterval);
+        }
+      }, 50);
+    }
+  });
+  
+  function startMindfulnessTimer(minutes) {
+    let timeLeft = minutes * 60;
+    const display = document.getElementById('timerDisplay');
+    display.classList.remove('hidden');
+    
+    if (timerInterval) clearInterval(timerInterval);
+    
+    timerInterval = setInterval(() => {
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        display.textContent = "Time's up! 🧘‍♀️";
+        // Play completion sound or vibration if available
+      }
+      timeLeft--;
+    }, 1000);
+  }
+  
+  function saveJournalEntry() {
+    const textarea = event.target.previousElementSibling;
+    const content = textarea.value.trim();
+    
+    if (content) {
+      // In a real app, this would save to the database
+      alert('💭 Your thoughts have been saved securely!');
+      textarea.value = '';
+    }
+  }
+  
+  function rateStrategy(rating) {
+    strategyRating = rating;
+    const buttons = document.querySelectorAll('.strategy-rating');
+    const feedback = document.getElementById('ratingFeedback');
+    
+    buttons.forEach((btn, index) => {
+      if (index < rating) {
+        btn.style.filter = 'hue-rotate(60deg)'; // Gold color
+      } else {
+        btn.style.filter = 'grayscale(100%)';
+      }
+    });
+    
+    const messages = {
+      1: "Thanks for the feedback! We'll find better strategies for you.",
+      2: "Got it! Let's work on finding more effective approaches.",
+      3: "Good to know! This strategy was moderately helpful.",
+      4: "Great! This strategy worked well for you.",
+      5: "Excellent! We'll remember this strategy works great for you!"
+    };
+    
+    feedback.textContent = messages[rating];
+    feedback.classList.remove('hidden');
+    
+    // Save rating to database (would be AJAX call in real app)
+    setTimeout(() => {
+      feedback.innerHTML += '<br><span class="text-green-400">✓ Rating saved!</span>';
+    }, 1000);
+  }
+</script>

@@ -1,0 +1,126 @@
+<div class="min-h-screen relative">
+  <!-- Three.js Canvas -->
+  <canvas id="catCanvas" class="absolute inset-0 w-full h-full"></canvas>
+  
+  <!-- Emotion Mapping Screen -->
+  <div class="relative z-10 min-h-screen p-6 overflow-y-auto">
+    <div class="max-w-2xl mx-auto pt-20">
+      <div class="glass-effect rounded-3xl p-8">
+        <h3 class="text-2xl font-bold text-white mb-6 text-center">
+          Let us explore this feeling together 🎯
+        </h3>
+        
+        <%= form_with url: game_generate_strategy_path, method: :post, local: true, class: "space-y-6", id: "emotionForm" do |f| %>
+          <%= hidden_field_tag :question_type, @question_type %>
+          <%= hidden_field_tag 'emotion_data[primary_emotion]', @emotion_map[:primary] %>
+          
+          <% @emotion_map[:questions].each_with_index do |question, index| %>
+            <div class="mb-8">
+              <% if question[:type] == 'intensity' %>
+                <label class="block text-white font-semibold mb-4"><%= question[:text] %></label>
+                <div class="flex items-center space-x-4 mb-2">
+                  <span class="text-white/60 text-sm">Mild</span>
+                  <%= range_field_tag "emotion_data[intensity]", 5, 
+                      min: 1, max: 10, 
+                      class: "flex-1 h-3 bg-white/20 rounded-lg appearance-none cursor-pointer slider",
+                      onchange: "updateIntensityDisplay(this.value)" %>
+                  <span class="text-white/60 text-sm">Intense</span>
+                </div>
+                <div class="text-center">
+                  <span id="intensityValue" class="text-white font-bold text-lg">5</span>
+                  <span class="text-white/80">/10</span>
+                </div>
+                
+              <% elsif question[:type] == 'trigger' %>
+                <label class="block text-white font-semibold mb-4"><%= question[:text] %></label>
+                <%= text_area_tag "emotion_data[trigger]", "", 
+                    placeholder: "Describe what happened or what you are thinking about...", 
+                    class: "w-full p-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-white/40 focus:ring-0 resize-none",
+                    rows: 3 %>
+                    
+              <% elsif question[:type] == 'physical' %>
+                <label class="block text-white font-semibold mb-4"><%= question[:text] %></label>
+                <div class="grid grid-cols-2 gap-3">
+                  <% ['Tense muscles', 'Racing heart', 'Shallow breathing', 'Stomach upset', 'Headache', 'Fatigue', 'Sweating', 'Restlessness'].each do |symptom| %>
+                    <label class="flex items-center space-x-2 text-white cursor-pointer">
+                      <%= check_box_tag "emotion_data[physical_symptoms][]", symptom, false, 
+                          class: "rounded border-white/30 bg-white/10 text-purple-600 focus:ring-purple-500" %>
+                      <span class="text-sm"><%= symptom %></span>
+                    </label>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+          
+          <div class="pt-6">
+            <%= button_tag type: :submit, 
+                class: "w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold text-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 shadow-xl",
+                onclick: "showLoadingState()" do %>
+              Find My Coping Strategy 🌟
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initThreeJS();
+    
+    // Make cat respond to form interactions
+    const form = document.getElementById('emotionForm');
+    const inputs = form.querySelectorAll('input, textarea');
+    
+    inputs.forEach(input => {
+      input.addEventListener('focus', () => {
+        if (cat) {
+          cat.rotation.y = Math.PI / 4;
+        }
+      });
+    });
+  });
+  
+  function updateIntensityDisplay(value) {
+    document.getElementById('intensityValue').textContent = value;
+    
+    // Change cat animation based on intensity
+    if (cat && value >= 8) {
+      cat.scale.set(1.3, 1.3, 1.3);
+    } else if (value >= 5) {
+      cat.scale.set(1.1, 1.1, 1.1);
+    } else {
+      cat.scale.set(0.9, 0.9, 0.9);
+    }
+  }
+  
+  function showLoadingState() {
+    const button = event.target;
+    button.innerHTML = '🔄 Finding the perfect strategy...';
+    button.disabled = true;
+  }
+</script>
+
+<style>
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  
+  .slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+</style>
