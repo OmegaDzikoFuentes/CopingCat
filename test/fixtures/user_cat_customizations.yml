@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  color: MyString
+  accessory: MyString
+  texture: MyString
+
+two:
+  user: two
+  color: MyString
+  accessory: MyString
+  texture: MyString

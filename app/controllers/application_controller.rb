@@ -12,7 +12,7 @@ class ApplicationController < ActionController::Base
   end
 
   def track_user_activity
-    return unless user_signed_in? && request.get?
+    return unless user_signed_in? && request.get? && should_track?
     
     AppUsage.create(
       user: current_user,
@@ -20,6 +20,10 @@ class ApplicationController < ActionController::Base
       timestamp: Time.current,
       session_duration: session[:session_start] ? (Time.current - session[:session_start]).to_i : nil
     )
+  end
+
+  def should_track?
+  %w[diary_entries emotional_episodes analytics].include?(controller_name)
   end
 
   def determine_action

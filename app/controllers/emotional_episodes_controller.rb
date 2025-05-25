@@ -153,10 +153,13 @@ class EmotionalEpisodesController < ApplicationController
     @episode = current_user.emotional_episodes.find(params[:id])
   end
 
+  accepts_nested_attributes_for :physical_symptoms, :coping_strategies, allow_destroy: true
+
   def episode_params
     params.require(:emotional_episode).permit(
       :emotion_id, :trigger_id, :intensity, :start_time, :end_time, 
-      :notes, :context_id, :diary_entry_id
+      :notes, :context_id, :diary_entry_id, physical_symptoms_attributes: [:id, :name, :severity, :notes, :_destroy],
+      coping_strategy_attributes: [:id, :strategy_id, :notes, :_destroy]
     )
   end
 

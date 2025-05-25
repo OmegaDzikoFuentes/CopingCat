@@ -1,0 +1,17 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">Choose Your Coping Cat</h1>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% @cats.each do |cat| %>
+      <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
+        <div class="h-48 bg-gray-100 rounded-lg mb-4 cat-preview" 
+             data-model="<%= cat.model_filename %>"
+             data-category="<%= cat.category %>"></div>
+        <h3 class="text-xl font-semibold text-gray-800"><%= cat.name %></h3>
+        <p class="text-gray-600"><%= cat.category %> Companion</p>
+        <%= link_to "Customize", customize_cat_path(cat), 
+            class: "mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
+      </div>
+    <% end %>
+  </div>
+</div>
