@@ -116,13 +116,18 @@ class AnalyticsController < ApplicationController
                 .average(:intensity)
   end
 
+  
   def calculate_strategy_effectiveness
-    current_user.strategy_usage_logs
-                .joins(:coping_strategy)
-                .group('coping_strategies.name')
-                .average(:effectiveness_rating)
-                .sort_by { |_, rating| -rating }
-                .first(5)
+  # Use episode_coping_strategies instead of strategy_usage_logs
+  # since that table has the effectiveness column
+  current_user.emotional_episodes
+              .joins(:episode_coping_strategies, :coping_strategies)
+              .where(created_at: 30.days.ago..Time.current)
+              .group('coping_strategies.name')
+              .average('episode_coping_strategies.effectiveness')
+              .compact # Remove nil values
+              .sort_by { |_, rating| -rating }
+              .first(5)
   end
 
   def calculate_usage_patterns
@@ -136,35 +141,45 @@ class AnalyticsController < ApplicationController
   def calculate_wellness_score
     recent_episodes = current_user.emotional_episodes.where(created_at: 7.days.ago..Time.current)
     return 50 if recent_episodes.empty?
-
+  
     avg_intensity = recent_episodes.average(:intensity)
-    strategy_usage = current_user.strategy_usage_logs.where(created_at: 7.days.ago..Time.current).count
-
+    
+    # Use episode_coping_strategies instead of strategy_usage_logs
+    strategy_usage = current_user.emotional_episodes
+                                 .joins(:episode_coping_strategies)
+                                 .where(created_at: 7.days.ago..Time.current)
+                                 .count
+  
     base_score = 100 - (avg_intensity * 10)
     usage_bonus = [strategy_usage * 2, 20].min
-
+  
     [base_score + usage_bonus, 100].min.round
   end
 
   def calculate_achievements
     achievements = []
-
+  
     if current_user.app_usages.where(created_at: 7.days.ago..Time.current).count >= 7
       achievements << { name: "Week Warrior", description: "Used the app 7 days in a row!", icon: "🏆" }
     end
-
-    strategy_count = current_user.strategy_usage_logs.count
+  
+    # Use episode_coping_strategies instead of strategy_usage_logs
+    strategy_count = current_user.emotional_episodes
+                                 .joins(:episode_coping_strategies)
+                                 .distinct
+                                 .count('episode_coping_strategies.coping_strategy_id')
+    
     if strategy_count >= 10
       achievements << { name: "Strategy Explorer", description: "Tried 10 different coping strategies!", icon: "🧭" }
     end
-
+  
     recent_avg = current_user.emotional_episodes.where(created_at: 7.days.ago..Time.current).average(:intensity)
     older_avg = current_user.emotional_episodes.where(created_at: 14.days.ago..7.days.ago).average(:intensity)
-
+  
     if recent_avg && older_avg && recent_avg < older_avg - 1
       achievements << { name: "Getting Better", description: "Your emotional intensity is improving!", icon: "📈" }
     end
-
+  
     achievements
   end
 

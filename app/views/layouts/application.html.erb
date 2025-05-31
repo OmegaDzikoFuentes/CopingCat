@@ -18,7 +18,7 @@
       * { font-family: 'Poppins', sans-serif; }
       
       .gradient-bg {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #667eea 2% , #764ba2 98% );
       }
       
       .glass-effect {
@@ -36,7 +36,7 @@
       .bubble-float:nth-child(4) { animation-delay: -0.5s; }
       
       @keyframes float {
-        0%, 100% { transform: translateY(0px); }
+        0% , 100% { transform: translateY(0px); }
         50% { transform: translateY(-10px); }
       }
       
@@ -94,9 +94,7 @@
 </div>
 
             
-            <%= link_to destroy_user_session_path, method: :delete, class: "text-white hover:text-purple-200" do %>
-              Sign Out
-            <% end %>
+            <%= button_to "Sign Out", destroy_user_session_path, method: :delete, class: "text-white hover:text-purple-200 bg-transparent border-none p-0 cursor-pointer" %>
           </div>
         </div>
       </div>

@@ -1,0 +1,28 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2 style="color: #4ECDC4;">Welcome to Coping Cat, <%= @resource.name || @resource.email %>! 🐱</h2>
+  
+  <p>Thank you for joining our emotional wellness community. You're just one step away from meeting your personal coping companion!</p>
+  
+  <div style="text-align: center; margin: 30px 0;">
+    <% if @resource.user_cat_customization&.cat %>
+      <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>Your Coping Cat is Ready! 🎉</h3>
+        <p><strong><%= @resource.user_cat_customization.cat.name %></strong> is waiting to support you on your emotional wellness journey.</p>
+      </div>
+    <% end %>
+    
+    <a href="<%= confirmation_url(@resource, confirmation_token: @token) %>" 
+       style="background-color: #4ECDC4; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+      Confirm My Account & Meet My Cat
+    </a>
+  </div>
+  
+  <p style="font-size: 14px; color: #666;">
+    If you didn't create an account with us, please ignore this email.
+  </p>
+  
+  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+  <p style="font-size: 12px; color: #999;">
+    This link will expire in <%= @resource.class.confirm_within ? distance_of_time_in_words(@resource.class.confirm_within) : "never" %>.
+  </p>
+</div>

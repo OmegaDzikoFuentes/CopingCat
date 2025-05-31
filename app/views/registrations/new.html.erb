@@ -1,0 +1,91 @@
+<h2>Sign up for your wellness journey</h2>
+
+<%= form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f| %>
+  <%= render "devise/shared/error_messages", resource: resource %>
+
+  <!-- Required Fields -->
+  <div class="form-section">
+    <h3>Required Information</h3>
+
+    <div class="field">
+      <%= f.label :name %>
+      <%= f.text_field :name, placeholder: "Your name", required: true %>
+    </div>
+
+    <div class="field">
+      <%= f.label :email %>
+      <%= f.email_field :email, placeholder: "you@example.com", required: true %>
+    </div>
+
+    <div class="field">
+      <%= f.label :password %>
+      <%= f.password_field :password, placeholder: "Create a password", required: true %>
+    </div>
+
+    <div class="field">
+      <%= f.label :password_confirmation %>
+      <%= f.password_field :password_confirmation, placeholder: "Confirm your password", required: true %>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Optional Fields -->
+  <div class="form-section">
+    <h3>Optional Details</h3>
+    <p class="hint">These help us personalize your wellness experience. You can skip them for now.</p>
+
+    <div class="field">
+      <%= f.label :age %>
+      <%= f.number_field :age, placeholder: "Your age (optional)" %>
+    </div>
+
+    <div class="field">
+      <%= f.label :gender %>
+      <%= f.select :gender, ['','Male', 'Female', 'Other'], {}, class: 'form-control' %>
+    </div>
+
+    <div class="field">
+      <%= f.label :occupation %>
+      <%= f.text_field :occupation, placeholder: "Your job or role (optional)" %>
+    </div>
+
+
+  </div>
+
+  <div class="actions">
+    <%= f.submit "Sign up", class: "btn btn-primary" %>
+    <div class="form-section">
+  <h3>Customize Your Coping Cat</h3>
+  
+  <%= f.fields_for :user_cat_customization_attributes, resource.build_user_cat_customization do |cc| %>
+    <div class="field">
+      <%= cc.label :base_color %>
+      <%= cc.color_field :base_color, value: '#ff8c42' %>
+    </div>
+
+    <div class="field">
+      <%= cc.label :accent_color %>
+      <%= cc.color_field :accent_color, value: '#764ba2' %>
+    </div>
+
+    <div class="field">
+      <%= cc.label :accessory %>
+      <%= cc.select :accessory, ['None', 'Bowtie', 'Hat', 'Scarf'] %>
+    </div>
+
+    <div class="field">
+      <%= cc.label :texture %>
+      <%= cc.select :texture, ['Smooth', 'Fluffy', 'Short-hair'] %>
+    </div>
+
+    <div class="field">
+      <%= cc.label :cat_id, "Base Cat Model" %>
+      <%= cc.collection_select :cat_id, Cat.all, :id, :name, include_blank: true %>
+    </div>
+  <% end %>
+</div>
+  </div>
+<% end %>
+
+<%= render "devise/shared/links" %>

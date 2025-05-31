@@ -3,9 +3,11 @@ class RegistrationsController < Devise::RegistrationsController
 
   def create
     super do |user|
-      # Assign random cat if not customizing
-      user.build_cat_customization unless user.cat_customization
-      user.assign_random_cat if user.persisted?
+      if user.persisted?
+        # User was successfully created, cat will be assigned via callback
+        # Send welcome message or perform other setup
+        Rails.logger.info "New user #{user.email} registered with cat: #{user.user_cat_customization&.cat&.name}"
+      end
     end
   end
 
@@ -13,13 +15,13 @@ class RegistrationsController < Devise::RegistrationsController
 
   def configure_sign_up_params
     devise_parameter_sanitizer.permit(:sign_up, keys: [
-      cat_customization_attributes: [
-        :base_color, 
-        :accent_color, 
-        :accessory, 
-        :texture,
-        :cat_id  # If selecting from predefined base models
-      ]
+      :name, :age, :gender, :occupation, :timezone, :lifestyle,
+      user_cat_customization_attributes: [:base_color, :accent_color, :accessory, :texture, :cat_id]
     ])
+  end
+
+  # Redirect after successful registration
+  def after_inactive_sign_up_path_for(resource)
+    new_user_session_path
   end
 end

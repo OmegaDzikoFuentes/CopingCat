@@ -26,6 +26,19 @@ Devise.setup do |config|
   # with default "from" parameter.
   config.mailer_sender = 'please-change-me-at-config-initializers-devise@example.com'
 
+  # Enable email confirmation
+  config.reconfirmable = true
+
+# Time to confirm email (optional, defaults to nil = no limit)
+  config.confirm_within = 3.days
+
+# Allow unconfirmed access for a certain period of time
+  config.allow_unconfirmed_access_for = 2.days
+
+# Determines if user should be sent confirmation email after changing password
+  config.send_email_changed_notification = true
+  config.send_password_change_notification = true
+
   # Configure the class responsible to send e-mails.
   # config.mailer = 'Devise::Mailer'
 

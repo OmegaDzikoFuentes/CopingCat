@@ -10,13 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_05_25_193121) do
+ActiveRecord::Schema[7.1].define(version: 2025_05_31_205645) do
   create_table "app_usages", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "action"
     t.datetime "timestamp"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "session_duration"
     t.index ["user_id"], name: "index_app_usages_on_user_id"
   end
 
@@ -168,6 +169,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_25_193121) do
   create_table "strategy_usage_logs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "coping_strategy_id"
+    t.index ["coping_strategy_id"], name: "index_strategy_usage_logs_on_coping_strategy_id"
+    t.index ["user_id"], name: "index_strategy_usage_logs_on_user_id"
   end
 
   create_table "tags", force: :cascade do |t|
@@ -203,6 +208,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_25_193121) do
     t.string "texture"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "cat_id"
+    t.string "base_color"
+    t.string "accent_color"
+    t.index ["cat_id"], name: "index_user_cat_customizations_on_cat_id"
     t.index ["user_id"], name: "index_user_cat_customizations_on_user_id"
   end
 
@@ -238,6 +247,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_25_193121) do
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
+    t.string "confirmation_token"
+    t.datetime "confirmed_at"
+    t.datetime "confirmation_sent_at"
+    t.string "unconfirmed_email"
+    t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
@@ -264,8 +278,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_25_193121) do
   add_foreign_key "physical_symptoms", "emotional_episodes"
   add_foreign_key "prediction_feedbacks", "predicted_triggers"
   add_foreign_key "prediction_feedbacks", "users"
+  add_foreign_key "strategy_usage_logs", "coping_strategies"
+  add_foreign_key "strategy_usage_logs", "users"
   add_foreign_key "trigger_patterns", "triggers"
   add_foreign_key "trigger_patterns", "users"
+  add_foreign_key "user_cat_customizations", "cats"
   add_foreign_key "user_cat_customizations", "users"
   add_foreign_key "user_goals", "target_emotions"
   add_foreign_key "user_goals", "target_triggers"

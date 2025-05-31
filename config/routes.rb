@@ -1,10 +1,12 @@
 # config/routes.rb
 Rails.application.routes.draw do
-  devise_for :users
+  devise_for :users, controllers: {
+  registrations: 'registrations'
+}
   get "social/Controller"
   get "game/Controller"
   # Devise routes for user authentication
-  # devise_for :users
+  
   
   # Root route
   root 'analytics#dashboard'

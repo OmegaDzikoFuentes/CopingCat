@@ -2,7 +2,8 @@ class User < ApplicationRecord
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
     devise :database_authenticatable, :registerable,
-        :recoverable, :rememberable, :validatable
+        :recoverable, :rememberable, :validatable,
+        :confirmable
     # Devise authentication
 
   
@@ -21,22 +22,21 @@ class User < ApplicationRecord
     # Cat customization
     belongs_to :cat, optional: true
     has_many :cat_customizations, dependent: :destroy
-    has_one :cat_customization, class_name: 'UserCatCustomization', dependent: :destroy
-    accepts_nested_attributes_for :cat_customization
+    has_one :user_cat_customization, dependent: :destroy  # Use the proper class name
+    accepts_nested_attributes_for :user_cat_customization
+
+    store_accessor :preferences, :timezone, :lifestyle
   
     # Validations
     validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-    validates :name, presence: true, length: { maximum: 100 }
-    validates :cat_model, presence: true
     validates :gender, inclusion: { in: ['Male', 'Female', 'Other', ''] }, allow_blank: true
     validates :occupation, length: { maximum: 100 }
     validates :age, numericality: { greater_than: 0 }, allow_nil: true
   
-    # Serialize lifestyle (if applicable)
-    serialize :lifestyle, JSON if column_names.include?('lifestyle')
-  
     # Callbacks
     before_create :assign_default_cat
+
+    attribute :timezone, :string
   
     # Wellness methods
     def wellness_score
@@ -80,17 +80,37 @@ class User < ApplicationRecord
     end
   
     def assign_random_cat
-      update(cat_model: Cat.random_cat.model_filename)
+      selected_cat = Cat.order("RANDOM()").first || create_default_cat
+      update(cat_model: selected_cat.model_filename)
     end
   
     def current_cat_config
-      cat_customization || create_cat_customization
+      user_cat_customization || build_user_cat_customization
+    end
+
+    def self.create_default_cat
+      Cat.find_or_create_by(name: "Default Cat") do |cat|
+        cat.model_filename = "default_cat.glb"
+        cat.category = "basic"
+        cat.customizable = false
+      end
     end
   
+
     private
   
     def assign_default_cat
-      self.cat_model ||= Cat.where(category: 'default').sample&.model_filename || 'default_cat.glb'
+      # Create a default cat customization if none exists
+      unless user_cat_customization.present?
+        default_cat = Cat.random_cat
+        create_user_cat_customization(
+          cat: default_cat,
+          base_color: '#FF8c42',
+          accent_color: '#764ba2',
+          accessory: 'none',
+          texture: 'smooth'
+        )
+      end
     end
   end
   

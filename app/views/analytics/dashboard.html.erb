@@ -108,7 +108,7 @@
           </div>
         <% end %>
         
-        <% most_used_strategy = current_user.strategy_usage_logs.joins(:coping_strategy).group('coping_strategies.name').order('COUNT(*) DESC').first %>
+        <% most_used_strategy = current_user.strategy_usage_logs.joins(:coping_strategy).group('coping_strategies.name').order(Arel.sql('COUNT(*) DESC')).first %>
         <% if most_used_strategy %>
           <div class="bg-green-500/20 rounded-lg p-4">
             <div class="flex items-center mb-2">
