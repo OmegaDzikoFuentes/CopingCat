@@ -76,6 +76,15 @@ Rails.application.routes.draw do
       post :quick_feedback
     end
   end
+
+  resources :game do
+    collection do
+      get :magic_eight_ball
+      get :fortune_teller  
+      get :mood_booster
+    end
+    resources :questions
+  end
   
   # Cat-related routes
   resources :cats do

@@ -1,0 +1,46 @@
+<div class="cat-companion-container relative">
+  <!-- Cat Avatar -->
+  <div class="cat-avatar w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-110"
+       onclick="toggleCatMenu()">
+    <% if @current_cat&.cat&.model_filename %>
+      <%= image_tag "cats/#{@current_cat.cat.model_filename}", 
+                    alt: "Your #{@current_cat.cat.name}", 
+                    class: "w-full h-full object-cover",
+                    style: "filter: hue-rotate(#{cat_color_filter(@current_cat)}deg);" %>
+    <% else %>
+      <div class="w-full h-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-2xl">
+        🐱
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Cat Menu -->
+  <div id="cat-menu" class="cat-menu absolute bottom-full right-0 mb-2 bg-white rounded-lg shadow-xl p-4 min-w-48 hidden">
+    <div class="text-center mb-3">
+      <h3 class="font-bold text-gray-800"><%= @current_cat&.cat&.name || "Your Cat" %></h3>
+      <p class="text-sm text-gray-600">Your emotional support companion</p>
+    </div>
+    
+    <div class="space-y-2">
+      <%= link_to game_index_path, class: "block w-full bg-purple-500 text-white py-2 px-3 rounded text-center hover:bg-purple-600 transition-colors" do %>
+        🎮 Play Games
+      <% end %>
+      
+      <%= link_to user_cat_customizations_path, class: "block w-full bg-blue-500 text-white py-2 px-3 rounded text-center hover:bg-blue-600 transition-colors" do %>
+        🎨 Customize Cat
+      <% end %>
+      
+      <%= link_to quick_mood_path, class: "block w-full bg-green-500 text-white py-2 px-3 rounded text-center hover:bg-green-600 transition-colors" do %>
+        😊 Log Mood
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Cat Speech Bubble (for suggestions) -->
+  <% if @wellness_suggestion %>
+    <div class="cat-speech absolute bottom-full right-0 mb-24 bg-white rounded-lg p-3 shadow-lg max-w-xs">
+      <p class="text-sm text-gray-800"><%= @wellness_suggestion %></p>
+      <div class="absolute top-full right-4 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-white"></div>
+    </div>
+  <% end %>
+</div>

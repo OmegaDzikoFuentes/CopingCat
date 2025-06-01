@@ -1,0 +1,39 @@
+<script>
+  let catMenuOpen = false;
+
+  function toggleCatMenu() {
+    const menu = document.getElementById('cat-menu');
+    catMenuOpen = !catMenuOpen;
+    
+    if (catMenuOpen) {
+      menu.classList.remove('hidden');
+      menu.classList.add('animate-fadeIn');
+    } else {
+      menu.classList.add('hidden');
+      menu.classList.remove('animate-fadeIn');
+    }
+  }
+
+  function dismissGameSuggestion() {
+    const modal = document.getElementById('game-suggestion-modal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  // Close cat menu when clicking outside
+  document.addEventListener('click', function(event) {
+    const catCompanion = document.getElementById('cat-companion');
+    const catMenu = document.getElementById('cat-menu');
+    
+    if (catCompanion && !catCompanion.contains(event.target) && catMenuOpen) {
+      catMenu.classList.add('hidden');
+      catMenuOpen = false;
+    }
+  });
+
+  // Auto-dismiss game suggestion after 10 seconds
+  setTimeout(() => {
+    dismissGameSuggestion();
+  }, 10000);
+</script>

@@ -96,6 +96,19 @@
             
             <%= button_to "Sign Out", destroy_user_session_path, method: :delete, class: "text-white hover:text-purple-200 bg-transparent border-none p-0 cursor-pointer" %>
           </div>
+          <!-- Cat Display Component -->
+          <% if user_signed_in? && @current_cat %>
+            <div id="cat-companion" class="fixed bottom-4 right-4 z-50">
+              <%= render 'shared/cat_companion' %>
+            </div>
+          <% end %>
+      
+          <!-- Game Suggestion Modal -->
+          <% if @cat_should_suggest_game %>
+            <div id="game-suggestion-modal" class="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
+              <%= render 'shared/game_suggestion_modal' %>
+            </div>
+          <% end %>
         </div>
       </div>
     </nav>

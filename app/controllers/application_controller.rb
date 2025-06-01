@@ -3,6 +3,40 @@ class ApplicationController < ActionController::Base
   before_action :authenticate_user!
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :track_user_activity
+  before_action :load_user_cat, if: :user_signed_in?
+  before_action :check_emotional_state, if: :user_signed_in?
+
+  protected
+
+  def load_user_cat
+    @current_cat = UserCatCustomization.includes(:cat).find_by(user_id: current_user.id)
+    @cat_should_suggest_game = should_cat_suggest_game?
+  end
+
+  def should_cat_suggest_game?
+    return false unless current_user.emotional_episodes.any?
+    
+    # Check if recent episodes have high intensity
+    recent_high_intensity = current_user.emotional_episodes
+                                       .where(created_at: 24.hours.ago..Time.current)
+                                       .where('intensity >= ?', 7)
+                                       .exists?
+    recent_high_intensity
+  end
+
+  def check_emotional_state
+    @wellness_suggestion = generate_wellness_suggestion if @cat_should_suggest_game
+  end
+
+  def generate_wellness_suggestion
+    suggestions = [
+      "Your cat thinks you might enjoy a quick game to lighten your mood! 🎮",
+      "Meow! How about we play a fun game together? 🐱",
+      "Your feline friend suggests taking a break with a game! ✨",
+      "Your cat is purring... maybe it's time for some playful distraction? 🎯"
+    ]
+    suggestions.sample
+  end
 
   private
 
