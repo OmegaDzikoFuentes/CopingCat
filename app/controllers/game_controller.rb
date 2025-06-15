@@ -48,7 +48,12 @@ class GameController < ApplicationController
   end
   
   def breathing_exercise
-    render :breathing
+    # Load selected cat if ID provided, otherwise use user's cat
+    @cat = if params[:cat_id].present?
+             Cat.find(params[:cat_id])
+           else
+             current_user.cat || assign_random_cat
+           end
   end
   
   private

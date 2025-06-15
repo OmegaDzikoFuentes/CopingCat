@@ -1,0 +1,43 @@
+<%= form_with(model: cat) do |form| %>
+    <% if cat.errors.any? %>
+      <div class="bg-red-50 text-red-500 p-4 mb-4 rounded">
+        <h2 class="font-bold"><%= pluralize(cat.errors.count, "error") %> prohibited this cat from being saved:</h2>
+        <ul>
+          <% cat.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="space-y-4">
+        <div>
+          <%= form.label :name, class: "block font-medium" %>
+          <%= form.text_field :name, class: "w-full rounded border-gray-300" %>
+        </div>
+  
+        <div>
+          <%= form.label :model_filename, "3D Model Filename", class: "block font-medium" %>
+          <%= form.text_field :model_filename, class: "w-full rounded border-gray-300" %>
+        </div>
+      </div>
+  
+      <div class="space-y-4">
+        <div>
+          <%= form.label :category, class: "block font-medium" %>
+          <%= form.select :category, options_for_select(['Calming', 'Motivational', 'Supportive', 'Playful'], cat.category), {}, class: "w-full rounded border-gray-300" %>
+        </div>
+  
+        <div class="flex items-center mt-6">
+          <%= form.check_box :customizable, class: "h-5 w-5 rounded" %>
+          <%= form.label :customizable, "Customizable by users?", class: "ml-2 font-medium" %>
+        </div>
+      </div>
+    </div>
+  
+    <div class="mt-8 flex justify-end gap-4">
+      <%= link_to "Cancel", cats_path, class: "px-4 py-2 border rounded" %>
+      <%= form.submit class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
+    </div>
+  <% end %>

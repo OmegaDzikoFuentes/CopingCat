@@ -1,5 +1,8 @@
 <div class="container mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold text-gray-800 mb-6">Choose Your Coping Cat</h1>
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">Coping Cats</h1>
+    <%= link_to "➕ New Cat", new_cat_path, class: "bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600" %>
+  </div>
   
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     <% @cats.each do |cat| %>
@@ -7,8 +10,24 @@
         <div class="h-48 bg-gray-100 rounded-lg mb-4 cat-preview" 
              data-model="<%= cat.model_filename %>"
              data-category="<%= cat.category %>"></div>
-        <h3 class="text-xl font-semibold text-gray-800"><%= cat.name %></h3>
-        <p class="text-gray-600"><%= cat.category %> Companion</p>
+        
+        <div class="flex justify-between items-start">
+          <div>
+            <h3 class="text-xl font-semibold text-gray-800">
+              <%= link_to cat.name, cat_path(cat) %>
+            </h3>
+            <p class="text-gray-600"><%= cat.category %> Companion</p>
+          </div>
+          
+          <div class="flex gap-2">
+            <%= link_to "✏️", edit_cat_path(cat), class: "text-blue-500 hover:text-blue-700" %>
+            <%= button_to "🗑️", cat, method: :delete, 
+                          data: { confirm: "Delete #{cat.name}?" }, 
+                          class: "text-red-500 hover:text-red-700", 
+                          form: { class: "inline" } %>
+          </div>
+        </div>
+        
         <%= link_to "Customize", customize_cat_path(cat), 
             class: "mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
       </div>

@@ -83,11 +83,15 @@ Rails.application.routes.draw do
       get :fortune_teller  
       get :mood_booster
     end
-    resources :questions
   end
+
+  resources :questions 
   
   # Cat-related routes
   resources :cats do
+    member do
+      get :breathing # Add this line
+    end
     collection do
       get :random
     end
@@ -160,6 +164,17 @@ Rails.application.routes.draw do
   
   # Health check and system routes
   get 'health', to: 'application#health_check'
+
+  namespace :game do
+    get '/', to: 'game#index', as: :root
+    get 'questions', to: 'game#questions', as: :questions
+    get 'emotion-mapping', to: 'game#emotion_mapping', as: :emotion_mapping
+    post 'generate-strategy', to: 'game#generate_strategy', as: :generate_strategy
+    get 'breathing', to: 'game#breathing_exercise', as: :breathing
+    get 'magic_eight_ball', to: 'game#magic_eight_ball'
+    get 'fortune_teller', to: 'game#fortune_teller'
+    get 'mood_booster', to: 'game#mood_booster'
+  end
   
   # Admin routes (if you have admin functionality)
   namespace :admin do

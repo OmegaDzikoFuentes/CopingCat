@@ -10,7 +10,7 @@
           Let us explore this feeling together 🎯
         </h3>
         
-        <%= form_with url: game_generate_strategy_path, method: :post, local: true, class: "space-y-6", id: "emotionForm" do |f| %>
+        <%= form_with url: game.generate_strategy_path, method: :post, local: true, class: "space-y-6", id: "emotionForm" do |f| %>
           <%= hidden_field_tag :question_type, @question_type %>
           <%= hidden_field_tag 'emotion_data[primary_emotion]', @emotion_map[:primary] %>
           

@@ -5,6 +5,14 @@ class CatsController < ApplicationController
     @cats = Cat.all.order(:category, :name)
   end
 
+  def show
+
+  end
+
+  def breathing
+  
+  end
+
   def new
     @cat = Cat.new
   end

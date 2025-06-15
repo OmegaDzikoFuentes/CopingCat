@@ -5,8 +5,22 @@
   <!-- Breathing Exercise Screen -->
   <div class="relative z-10 min-h-screen flex flex-col justify-center items-center p-6">
     <div class="glass-effect rounded-3xl p-8 max-w-lg w-full text-center">
-      <h2 class="text-3xl font-bold text-white mb-6">Deep Breathing Exercise</h2>
-      <p class="text-white/80 mb-8">Follow the breathing circle and let us calm down together</p>
+      <h2 class="text-3xl font-bold text-white mb-2">Deep Breathing Exercise</h2>
+      
+      <!-- Display cat name and category -->
+      <div class="flex items-center justify-center mb-6">
+        <% if @cat %>
+          <div class="mr-3 bg-white/20 rounded-full p-2">
+            <span class="text-2xl">🐱</span>
+          </div>
+          <div>
+            <p class="text-white/80">with <%= @cat.name %></p>
+            <p class="text-white/60 text-sm"><%= @cat.category %> Companion</p>
+          </div>
+        <% else %>
+          <p class="text-white/80">Follow the breathing circle to calm down</p>
+        <% end %>
+      </div>
       
       <!-- Breathing Circle -->
       <div class="relative mx-auto mb-8" style="width: 200px; height: 200px;">
@@ -19,18 +33,18 @@
           <div class="breathing-dot" style="top: 0; left: 50%; transform: translateX(-50%);"></div>
           <div class="breathing-dot" style="top: 50%; right: 0; transform: translateY(-50%);"></div>
           <div class="breathing-dot" style="bottom: 0; left: 50%; transform: translateX(-50%);"></div>
-          <div class="breathing-dot" style="top:: 50%; left: 0; transform: translateY(-50%);"></div>
+          <div class="breathing-dot" style="top: 50%; left: 0; transform: translateY(-50%);"></div>
         </div>
       </div>
       
       <!-- Controls -->
       <div class="space-y-4 mb-6">
         <div class="flex justify-center space-x-4">
-          <button id="startBreathing" onclick="startBreathingExercise()" 
+          <button id="startBreathing" 
                   class="bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors">
             🫁 Start Breathing
           </button>
-          <button id="stopBreathing" onclick="stopBreathingExercise()" 
+          <button id="stopBreathing" 
                   class="bg-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-600 transition-colors hidden">
             ⏹️ Stop
           </button>
@@ -55,8 +69,8 @@
       </div>
       
       <!-- Back Button -->
-      <%= link_to :back, class: "text-white/80 hover:text-white underline" do %>
-        ← Back to Strategy
+      <%= link_to game.root_path, class: "text-white/80 hover:text-white underline" do %>
+        ← Back to Game
       <% end %>
     </div>
   </div>
@@ -68,14 +82,19 @@
   let sessionStart;
   let breathCount = 0;
   let sessionTimer;
+  let catModel; // Reference to Three.js cat model
   
   document.addEventListener('DOMContentLoaded', () => {
-    initThreeJS();
+    // Initialize Three.js with the selected cat
+    <% if @cat %>
+      initThreeJS('<%= asset_path("models/#{@cat.model_filename}") %>');
+    <% else %>
+      initThreeJS(); // Default model
+    <% end %>
     
-    // Make cat breathe along
-    if (cat) {
-      cat.scale.set(0.8, 0.8, 0.8);
-    }
+    // Setup event listeners
+    document.getElementById('startBreathing').addEventListener('click', startBreathingExercise);
+    document.getElementById('stopBreathing').addEventListener('click', stopBreathingExercise);
   });
   
   function startBreathingExercise() {
@@ -113,7 +132,7 @@
         case 0: // Inhale
           circle.style.transform = 'scale(1.5)';
           circle.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
-          if (cat) cat.scale.set(1.0, 1.0, 1.0);
+          if (catModel) catModel.scale.set(1.0, 1.0, 1.0);
           break;
         case 1: // Hold (inhale)
           circle.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
@@ -121,7 +140,7 @@
         case 2: // Exhale
           circle.style.transform = 'scale(1)';
           circle.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
-          if (cat) cat.scale.set(0.8, 0.8, 0.8);
+          if (catModel) catModel.scale.set(0.8, 0.8, 0.8);
           breathCount++;
           document.getElementById('breathCount').textContent = breathCount;
           break;
@@ -157,7 +176,7 @@
     circle.style.backgroundColor = 'transparent';
     text.textContent = 'Well done! 🌟';
     
-    if (cat) cat.scale.set(0.8, 0.8, 0.8);
+    if (catModel) catModel.scale.set(0.8, 0.8, 0.8);
     
     // Show completion message
     setTimeout(() => {
@@ -174,10 +193,36 @@
     const seconds = elapsed % 60;
     document.getElementById('sessionTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
+  
+  // Initialize Three.js scene
+  function initThreeJS(modelPath = null) {
+    // Your Three.js initialization code
+    // Should create a scene, camera, renderer, and load the cat model
+    
+    console.log("Initializing Three.js with model:", modelPath);
+    
+    // Example pseudocode:
+    // const scene = new THREE.Scene();
+    // const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    // const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('catCanvas') });
+    // 
+    // if (modelPath) {
+    //   loadCatModel(modelPath).then(model => {
+    //     catModel = model;
+    //     scene.add(model);
+    //   });
+    // }
+    // 
+    // function animate() {
+    //   requestAnimationFrame(animate);
+    //   renderer.render(scene, camera);
+    // }
+    // animate();
+  }
 </script>
 
 <style>
-   {
+  .breathing-circle {
     transition: all 4s ease-in-out;
   }
   
@@ -186,12 +231,19 @@
     width: 8px;
     height: 8px;
     background: rgba(255, 255, 255, 0.5);
-    border-radius: 50% ;
+    border-radius: 50%;
     animation: pulse 2s ease-in-out infinite;
   }
   
   @keyframes pulse {
-    0% , 100% { opacity: 0.5; transform: scale(1); }
+    0%, 100% { opacity: 0.5; transform: scale(1); }
     50% { opacity: 1; transform: scale(1.2); }
+  }
+  
+  .glass-effect {
+    background: rgba(16, 18, 27, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 </style>
