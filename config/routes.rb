@@ -1,18 +1,12 @@
 # config/routes.rb
 Rails.application.routes.draw do
   devise_for :users, controllers: {
-  registrations: 'registrations'
-}
-  get "social/Controller"
-  get "game/Controller"
-  # Devise routes for user authentication
-  
+    registrations: 'registrations'
+  }
   
   # Root route
   root 'analytics#dashboard'
 
-  
-  
   # Main application routes
   resources :emotions do
     member do
@@ -31,7 +25,7 @@ Rails.application.routes.draw do
   
   resources :coping_strategies do
     member do
-      post :use # For quick use during episodes
+      post :use
     end
   end
   
@@ -42,7 +36,6 @@ Rails.application.routes.draw do
   end
   
   resources :emotional_episodes do
-    # Nested routes for related resources
     resources :physical_symptoms do
       collection do
         post :quick_add
@@ -51,7 +44,6 @@ Rails.application.routes.draw do
     
     resources :behavior_reactions
     
-    # Custom episode routes
     collection do
       get :quick_log
       post :create_quick
@@ -77,20 +69,12 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :game do
-    collection do
-      get :magic_eight_ball
-      get :fortune_teller  
-      get :mood_booster
-    end
-  end
-
   resources :questions 
   
   # Cat-related routes
   resources :cats do
     member do
-      get :breathing # Add this line
+      get :breathing
     end
     collection do
       get :random
@@ -119,15 +103,52 @@ Rails.application.routes.draw do
   get 'analytics/patterns', to: 'analytics#patterns'
   get 'analytics/export', to: 'analytics#export'
   
+  scope path: '/game', as: 'game' do
+    # Main game dashboard - matches views/game/index.html.erb
+    get '/', to: 'game#index', as: :root
+    
+    # 4 emotion question bubbles - matches views/game/questions.html.erb
+    get 'questions', to: 'game#questions', as: :questions
+    
+    # Multi-step emotion form - matches views/game/emotion_mapping.html.erb
+    get 'emotion-mapping', to: 'game#emotion_mapping', as: :emotion_mapping
+    
+    # Strategy results page - matches views/game/generate_strategy.html.erb
+    get 'generate-strategy', to: 'game#generate_strategy', as: :generate_strategy
+    
+    # NEW: Tetris-like mindfulness game - matches views/game/over_stacked.html.erb
+    get 'over-stacked', to: 'game#over_stacked', as: :over_stacked
+    
+    # Breathing exercise interface - matches views/game/breathing_exercise.html.erb
+    get 'breathing-exercise', to: 'game#breathing_exercise', as: :breathing_exercise
+    
+    # Magic 8-ball game - matches views/game/magic_eight_ball.html.erb
+    get 'magic-eight-ball', to: 'game#magic_eight_ball', as: :magic_eight_ball
+    
+    # Fortune telling game - matches views/game/fortune_teller.html.erb
+    get 'fortune-teller', to: 'game#fortune_teller', as: :fortune_teller
+    
+    # Mood boosting activities - matches views/game/mood_booster.html.erb  
+    get 'mood-booster', to: 'game#mood_booster', as: :mood_booster
+    
+    # POST routes for form submissions and game interactions
+    post 'process-emotion-step', to: 'game#process_emotion_step', as: :process_emotion_step
+    post 'generate-strategy', to: 'game#generate_strategy' # Handle POST to same action
+    post 'magic-eight-ball', to: 'game#magic_eight_ball' # Handle question submissions
+    post 'over-stacked/score', to: 'game#save_over_stacked_score', as: :save_over_stacked_score
+    post 'breathing-exercise/complete', to: 'game#complete_breathing_exercise', as: :complete_breathing_exercise
+  end
+  
+  # Helper routes for shared components
+  get 'shared/cat-animation', to: 'shared#cat_animation', as: :shared_cat_animation
+  
   # API routes
   namespace :api do
     namespace :v1 do
-      # API authentication and user info
       post 'auth/login', to: 'authentication#login'
       post 'auth/logout', to: 'authentication#logout'
       get 'auth/me', to: 'authentication#me'
       
-      # Core API endpoints
       resources :emotional_episodes, only: [:index, :show, :create, :update] do
         resources :physical_symptoms, only: [:create, :destroy]
         
@@ -140,19 +161,15 @@ Rails.application.routes.draw do
       resources :triggers, only: [:index, :show]
       resources :coping_strategies, only: [:index, :show, :create]
       
-      # Quick logging endpoint
       post 'quick_log', to: 'quick_log#create'
       
-      # User preferences and settings
       get 'user/profile', to: 'users#profile'
       patch 'user/profile', to: 'users#update_profile'
       
-      # Analytics endpoints
       get 'analytics/summary', to: 'analytics#summary'
       get 'analytics/trends', to: 'analytics#trends'
       get 'analytics/insights', to: 'analytics#insights'
       
-      # Cat API endpoints
       resources :cats, only: [:index, :show]
       resources :user_cat_customizations, path: 'my_cat', only: [:show, :update] do
         collection do
@@ -164,19 +181,8 @@ Rails.application.routes.draw do
   
   # Health check and system routes
   get 'health', to: 'application#health_check'
-
-  namespace :game do
-    get '/', to: 'game#index', as: :root
-    get 'questions', to: 'game#questions', as: :questions
-    get 'emotion-mapping', to: 'game#emotion_mapping', as: :emotion_mapping
-    post 'generate-strategy', to: 'game#generate_strategy', as: :generate_strategy
-    get 'breathing', to: 'game#breathing_exercise', as: :breathing
-    get 'magic_eight_ball', to: 'game#magic_eight_ball'
-    get 'fortune_teller', to: 'game#fortune_teller'
-    get 'mood_booster', to: 'game#mood_booster'
-  end
   
-  # Admin routes (if you have admin functionality)
+  # Admin routes
   namespace :admin do
     resources :users, only: [:index, :show, :edit, :update] do
       member do
@@ -190,7 +196,6 @@ Rails.application.routes.draw do
     resources :coping_strategies
     resources :cats
     
-    # Admin analytics
     get 'analytics', to: 'analytics#dashboard'
     get 'system_health', to: 'system#health'
   end
@@ -219,8 +224,6 @@ Rails.application.routes.draw do
     post 'notifications', to: 'notifications#handle'
   end
   
-  # Custom routes for specific features
-  
   # Mood tracking shortcuts
   get 'quick_mood', to: 'emotional_episodes#quick_log'
   post 'log_mood', to: 'emotional_episodes#create_quick'
@@ -233,7 +236,7 @@ Rails.application.routes.draw do
   get 'insights', to: 'insights#index'
   get 'recommendations', to: 'recommendations#index'
   
-  # Social features (if implemented)
+  # Social features
   resources :user_connections, only: [:index, :create, :destroy] do
     member do
       patch :accept

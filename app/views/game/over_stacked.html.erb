@@ -1,0 +1,735 @@
+<% content_for :head do %>
+    <style>
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        min-height: 100vh;
+      }
+      
+      .tetris-board {
+        width: 300px;
+        height: 600px;
+        border: 3px solid rgba(255, 255, 255, 0.4);
+        background: rgba(0, 0, 0, 0.3);
+        position: relative;
+        margin: 0 auto;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      
+      .tetris-cell {
+        width: 30px;
+        height: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: inline-block;
+        position: absolute;
+      }
+      
+      .game-stats {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        padding: 20px;
+        color: white;
+      }
+      
+      .compliment-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+      
+      .compliment-modal.show {
+        opacity: 1;
+        visibility: visible;
+      }
+      
+      .compliment-content {
+        background: linear-gradient(45deg, #ff6b6b, #ffa726);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        max-width: 400px;
+        transform: scale(0.8);
+        transition: transform 0.3s ease;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+      
+      .compliment-modal.show .compliment-content {
+        transform: scale(1);
+      }
+      
+      .game-controls {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 20px;
+      }
+      
+      .control-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      
+      .control-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+      
+      .control-btn:active {
+        transform: translateY(0);
+      }
+      
+      .next-piece {
+        width: 120px;
+        height: 120px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        position: relative;
+        margin: 0 auto;
+      }
+      
+      .cat-companion {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        font-size: 3rem;
+        animation: float 3s ease-in-out infinite;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+      
+      @keyframes lineClearing {
+        0% { background: rgba(255, 255, 255, 0.8); }
+        50% { background: rgba(255, 215, 0, 0.8); }
+        100% { background: transparent; }
+      }
+      
+      .clearing-line {
+        animation: lineClearing 0.5s ease-in-out;
+      }
+      
+      .pause-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+      
+      .pause-overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+    </style>
+  <% end %>
+  
+  <div class="min-h-screen gradient-bg relative">
+    <!-- Main Game Container -->
+    <div class="container mx-auto px-4 py-6">
+      <!-- Header -->
+      <div class="text-center mb-6">
+        <h1 class="text-4xl font-bold text-white mb-2">🧩 Mindful Tetris 🧩</h1>
+        <p class="text-white/80 text-lg">Stack your way to inner peace, one block at a time</p>
+      </div>
+      
+      <div class="flex flex-col lg:flex-row gap-6 items-start justify-center">
+        <!-- Game Stats -->
+        <div class="game-stats w-full lg:w-64">
+          <h3 class="text-xl font-bold mb-4">🎯 Your Journey</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span>Score:</span>
+              <span id="score">0</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Level:</span>
+              <span id="level">1</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Lines:</span>
+              <span id="lines">0</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Until Compliment:</span>
+              <span id="linesUntilCompliment">10</span>
+            </div>
+          </div>
+          
+          <div class="mt-6">
+            <h4 class="font-semibold mb-2">Next Piece:</h4>
+            <div class="next-piece" id="nextPiece"></div>
+          </div>
+          
+          <div class="mt-6">
+            <button id="pauseBtn" class="control-btn w-full">
+              ⏸️ Pause
+            </button>
+            <button id="restartBtn" class="control-btn w-full mt-2">
+              🔄 New Game
+            </button>
+          </div>
+        </div>
+        
+        <!-- Game Board -->
+        <div class="relative">
+          <div class="tetris-board" id="gameBoard">
+            <div class="pause-overlay" id="pauseOverlay">
+              <div class="text-center">
+                <div class="text-4xl mb-2">⏸️</div>
+                <div>Game Paused</div>
+                <div class="text-lg mt-2">Press SPACE to continue</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="game-stats w-full lg:w-64">
+          <h3 class="text-xl font-bold mb-4">🎮 Controls</h3>
+          <div class="text-sm space-y-2 mb-4">
+            <div>⬅️ ➡️ Move left/right</div>
+            <div>⬇️ Soft drop</div>
+            <div>⬆️ Rotate</div>
+            <div>SPACE Hard drop</div>
+            <div>P Pause</div>
+          </div>
+          
+          <div class="game-controls">
+            <button class="control-btn" onclick="moveLeft()">⬅️</button>
+            <button class="control-btn" onclick="rotate()">🔄</button>
+            <button class="control-btn" onclick="moveRight()">➡️</button>
+            <button class="control-btn" onclick="softDrop()">⬇️</button>
+            <button class="control-btn" onclick="hardDrop()">⚡</button>
+            <button class="control-btn" onclick="rotate()">↩️</button>
+          </div>
+          
+          <div class="mt-6 text-center">
+            <div class="text-white/80 text-sm">
+              💡 Focus on your breathing as you play. Each cleared line brings you closer to a mindful moment! 🧘‍♀️
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Compliment Modal -->
+    <div class="compliment-modal" id="complimentModal">
+      <div class="compliment-content">
+        <div class="text-6xl mb-4">🎉</div>
+        <h2 class="text-2xl font-bold text-white mb-4">Amazing Progress!</h2>
+        <p class="text-white text-lg mb-4" id="complimentText">
+          You cleared 10 lines! Your focus and persistence are truly inspiring!
+        </p>
+        <div class="text-4xl mb-4">✨</div>
+        <button onclick="closeCompliment()" class="bg-white text-purple-600 px-6 py-3 rounded-full font-bold hover:bg-gray-100 transition-colors">
+          Continue Playing! 💪
+        </button>
+      </div>
+    </div>
+    
+    <!-- Cat Companion -->
+    <div class="cat-companion">😸</div>
+  </div>
+  
+  <script>
+    // Game constants
+    const BOARD_WIDTH = 10;
+    const BOARD_HEIGHT = 20;
+    const CELL_SIZE = 30;
+    
+    // Game state
+    let board = [];
+    let currentPiece = null;
+    let nextPiece = null;
+    let gameRunning = false;
+    let gamePaused = false;
+    let score = 0;
+    let level = 1;
+    let lines = 0;
+    let linesForCompliment = 0;
+    let dropTime = 1000;
+    let lastTime = 0;
+    
+    // Tetris pieces (tetrominoes)
+    const PIECES = {
+      I: {
+        shape: [[1,1,1,1]],
+        color: '#00f5ff'
+      },
+      O: {
+        shape: [[1,1],[1,1]],
+        color: '#ffff00'
+      },
+      T: {
+        shape: [[0,1,0],[1,1,1]],
+        color: '#a000f0'
+      },
+      S: {
+        shape: [[0,1,1],[1,1,0]],
+        color: '#00f000'
+      },
+      Z: {
+        shape: [[1,1,0],[0,1,1]],
+        color: '#f00000'
+      },
+      J: {
+        shape: [[1,0,0],[1,1,1]],
+        color: '#0000f0'
+      },
+      L: {
+        shape: [[0,0,1],[1,1,1]],
+        color: '#f0a000'
+      }
+    };
+    
+    // Wellness compliments
+    const COMPLIMENTS = [
+      "Your focus is incredible! You're building both towers and inner strength! 💪✨",
+      "Amazing persistence! Just like in life, you're fitting the pieces together beautifully! 🌟",
+      "You're in the zone! This mindful playing is great for your mental wellness! 🧘‍♀️💚",
+      "Fantastic pattern recognition! Your brain is getting a wonderful workout! 🧠⚡",
+      "Your patience and strategy are paying off! You're teaching yourself resilience! 🌱",
+      "Brilliant problem-solving! Each cleared line represents your growing confidence! 🎯",
+      "You're creating such beautiful order from chaos! That's a true life skill! 🎨",
+      "Your concentration is inspiring! You're practicing mindfulness through play! 🕯️",
+      "Excellent spatial thinking! You're exercising both your mind and your spirit! 🏃‍♀️💭",
+      "You're finding rhythm in the challenge! That's the essence of balanced living! ⚖️🎵",
+      "Your adaptability shines through! You're learning to flow with whatever comes! 🌊",
+      "Such graceful decision-making! You're building confidence one block at a time! 🏗️💎"
+    ];
+    
+    // Initialize game
+    function init() {
+      createBoard();
+      nextPiece = createRandomPiece();
+      spawnPiece();
+      updateDisplay();
+      gameRunning = true;
+      gameLoop();
+    }
+    
+    function createBoard() {
+      board = [];
+      for (let y = 0; y < BOARD_HEIGHT; y++) {
+        board[y] = [];
+        for (let x = 0; x < BOARD_WIDTH; x++) {
+          board[y][x] = 0;
+        }
+      }
+      renderBoard();
+    }
+    
+    function renderBoard() {
+      const gameBoard = document.getElementById('gameBoard');
+      gameBoard.innerHTML = '<div class="pause-overlay" id="pauseOverlay"><div class="text-center"><div class="text-4xl mb-2">⏸️</div><div>Game Paused</div><div class="text-lg mt-2">Press SPACE to continue</div></div></div>';
+      
+      for (let y = 0; y < BOARD_HEIGHT; y++) {
+        for (let x = 0; x < BOARD_WIDTH; x++) {
+          const cell = document.createElement('div');
+          cell.className = 'tetris-cell';
+          cell.style.left = (x * CELL_SIZE) + 'px';
+          cell.style.top = (y * CELL_SIZE) + 'px';
+          cell.id = `cell-${x}-${y}`;
+          
+          if (board[y][x]) {
+            cell.style.background = board[y][x];
+            cell.style.border = '1px solid rgba(255,255,255,0.5)';
+          }
+          
+          gameBoard.appendChild(cell);
+        }
+      }
+      
+      // Render current piece
+      if (currentPiece) {
+        renderPiece(currentPiece);
+      }
+    }
+    
+    function renderPiece(piece) {
+      const shape = piece.shape;
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+          if (shape[y][x]) {
+            const boardX = piece.x + x;
+            const boardY = piece.y + y;
+            if (boardX >= 0 && boardX < BOARD_WIDTH && boardY >= 0 && boardY < BOARD_HEIGHT) {
+              const cell = document.getElementById(`cell-${boardX}-${boardY}`);
+              if (cell) {
+                cell.style.background = piece.color;
+                cell.style.border = '1px solid rgba(255,255,255,0.8)';
+                cell.style.boxShadow = '0 0 10px rgba(255,255,255,0.3)';
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    function createRandomPiece() {
+      const pieces = Object.keys(PIECES);
+      const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
+      const pieceData = PIECES[randomPiece];
+      
+      return {
+        shape: pieceData.shape,
+        color: pieceData.color,
+        x: Math.floor(BOARD_WIDTH / 2) - Math.floor(pieceData.shape[0].length / 2),
+        y: 0
+      };
+    }
+    
+    function spawnPiece() {
+      currentPiece = nextPiece;
+      nextPiece = createRandomPiece();
+      renderNextPiece();
+      
+      if (collision(currentPiece, 0, 0)) {
+        gameOver();
+      }
+    }
+    
+    function renderNextPiece() {
+      const nextPieceDiv = document.getElementById('nextPiece');
+      nextPieceDiv.innerHTML = '';
+      
+      const shape = nextPiece.shape;
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+          if (shape[y][x]) {
+            const cell = document.createElement('div');
+            cell.style.position = 'absolute';
+            cell.style.width = '20px';
+            cell.style.height = '20px';
+            cell.style.left = (x * 22 + 20) + 'px';
+            cell.style.top = (y * 22 + 20) + 'px';
+            cell.style.background = nextPiece.color;
+            cell.style.border = '1px solid rgba(255,255,255,0.5)';
+            cell.style.borderRadius = '2px';
+            nextPieceDiv.appendChild(cell);
+          }
+        }
+      }
+    }
+    
+    function collision(piece, dx, dy) {
+      const newX = piece.x + dx;
+      const newY = piece.y + dy;
+      
+      for (let y = 0; y < piece.shape.length; y++) {
+        for (let x = 0; x < piece.shape[y].length; x++) {
+          if (piece.shape[y][x]) {
+            const boardX = newX + x;
+            const boardY = newY + y;
+            
+            if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT) {
+              return true;
+            }
+            if (boardY >= 0 && board[boardY][boardX]) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+    
+    function moveLeft() {
+      if (currentPiece && !collision(currentPiece, -1, 0)) {
+        currentPiece.x--;
+        renderBoard();
+      }
+    }
+    
+    function moveRight() {
+      if (currentPiece && !collision(currentPiece, 1, 0)) {
+        currentPiece.x++;
+        renderBoard();
+      }
+    }
+    
+    function softDrop() {
+      if (currentPiece && !collision(currentPiece, 0, 1)) {
+        currentPiece.y++;
+        score++;
+        renderBoard();
+      }
+    }
+    
+    function hardDrop() {
+      if (!currentPiece) return;
+      
+      while (!collision(currentPiece, 0, 1)) {
+        currentPiece.y++;
+        score += 2;
+      }
+      renderBoard();
+      placePiece();
+    }
+    
+    function rotate() {
+      if (!currentPiece) return;
+      
+      const rotated = rotateMatrix(currentPiece.shape);
+      const originalShape = currentPiece.shape;
+      currentPiece.shape = rotated;
+      
+      if (collision(currentPiece, 0, 0)) {
+        currentPiece.shape = originalShape;
+      } else {
+        renderBoard();
+      }
+    }
+    
+    function rotateMatrix(matrix) {
+      const N = matrix.length;
+      const rotated = [];
+      for (let i = 0; i < N; i++) {
+        rotated[i] = [];
+        for (let j = 0; j < matrix[i].length; j++) {
+          rotated[i][j] = matrix[N - 1 - j][i];
+        }
+      }
+      return rotated;
+    }
+    
+    function placePiece() {
+      // Place piece on board
+      for (let y = 0; y < currentPiece.shape.length; y++) {
+        for (let x = 0; x < currentPiece.shape[y].length; x++) {
+          if (currentPiece.shape[y][x]) {
+            const boardX = currentPiece.x + x;
+            const boardY = currentPiece.y + y;
+            if (boardY >= 0) {
+              board[boardY][boardX] = currentPiece.color;
+            }
+          }
+        }
+      }
+      
+      // Check for completed lines
+      const clearedLines = clearLines();
+      if (clearedLines > 0) {
+        lines += clearedLines;
+        linesForCompliment += clearedLines;
+        score += clearedLines * 100 * level;
+        level = Math.floor(lines / 10) + 1;
+        dropTime = Math.max(100, 1000 - (level - 1) * 100);
+        
+        // Check for compliment
+        if (linesForCompliment >= 10) {
+          showCompliment();
+          linesForCompliment = 0;
+        }
+      }
+      
+      updateDisplay();
+      spawnPiece();
+    }
+    
+    function clearLines() {
+      let clearedCount = 0;
+      const linesToClear = [];
+      
+      // Find completed lines
+      for (let y = 0; y < BOARD_HEIGHT; y++) {
+        let isComplete = true;
+        for (let x = 0; x < BOARD_WIDTH; x++) {
+          if (!board[y][x]) {
+            isComplete = false;
+            break;
+          }
+        }
+        if (isComplete) {
+          linesToClear.push(y);
+        }
+      }
+      
+      // Animate line clearing
+      if (linesToClear.length > 0) {
+        linesToClear.forEach(lineY => {
+          for (let x = 0; x < BOARD_WIDTH; x++) {
+            const cell = document.getElementById(`cell-${x}-${lineY}`);
+            if (cell) {
+              cell.classList.add('clearing-line');
+            }
+          }
+        });
+        
+        setTimeout(() => {
+          // Remove completed lines
+          linesToClear.forEach(lineY => {
+            board.splice(lineY, 1);
+            board.unshift(new Array(BOARD_WIDTH).fill(0));
+            clearedCount++;
+          });
+          renderBoard();
+        }, 300);
+      }
+      
+      return linesToClear.length;
+    }
+    
+    function showCompliment() {
+      const modal = document.getElementById('complimentModal');
+      const complimentText = document.getElementById('complimentText');
+      
+      const randomCompliment = COMPLIMENTS[Math.floor(Math.random() * COMPLIMENTS.length)];
+      complimentText.textContent = randomCompliment;
+      
+      gamePaused = true;
+      modal.classList.add('show');
+    }
+    
+    function closeCompliment() {
+      const modal = document.getElementById('complimentModal');
+      modal.classList.remove('show');
+      gamePaused = false;
+    }
+    
+    function updateDisplay() {
+      document.getElementById('score').textContent = score;
+      document.getElementById('level').textContent = level;
+      document.getElementById('lines').textContent = lines;
+      document.getElementById('linesUntilCompliment').textContent = 10 - linesForCompliment;
+    }
+    
+    function togglePause() {
+      gamePaused = !gamePaused;
+      const pauseOverlay = document.getElementById('pauseOverlay');
+      const pauseBtn = document.getElementById('pauseBtn');
+      
+      if (gamePaused) {
+        pauseOverlay.classList.add('show');
+        pauseBtn.textContent = '▶️ Resume';
+      } else {
+        pauseOverlay.classList.remove('show');
+        pauseBtn.textContent = '⏸️ Pause';
+      }
+    }
+    
+    function gameOver() {
+      gameRunning = false;
+      alert('Game Over! 🎮\n\nFinal Score: ' + score + '\nLines Cleared: ' + lines + '\n\nYou played with mindfulness and focus! 🌟');
+    }
+    
+    function restart() {
+      gameRunning = false;
+      score = 0;
+      level = 1;
+      lines = 0;
+      linesForCompliment = 0;
+      dropTime = 1000;
+      gamePaused = false;
+      
+      const pauseOverlay = document.getElementById('pauseOverlay');
+      const pauseBtn = document.getElementById('pauseBtn');
+      pauseOverlay.classList.remove('show');
+      pauseBtn.textContent = '⏸️ Pause';
+      
+      init();
+    }
+    
+    function gameLoop(time = 0) {
+      if (!gameRunning) return;
+      
+      const deltaTime = time - lastTime;
+      
+      if (!gamePaused && deltaTime > dropTime) {
+        if (currentPiece) {
+          if (collision(currentPiece, 0, 1)) {
+            placePiece();
+          } else {
+            currentPiece.y++;
+            renderBoard();
+          }
+        }
+        lastTime = time;
+      }
+      
+      requestAnimationFrame(gameLoop);
+    }
+    
+    // Event listeners
+    document.addEventListener('keydown', (e) => {
+      if (!gameRunning || gamePaused) {
+        if (e.code === 'Space' || e.key === 'p' || e.key === 'P') {
+          togglePause();
+        }
+        return;
+      }
+      
+      switch(e.code) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          moveLeft();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          moveRight();
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          softDrop();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          rotate();
+          break;
+        case 'Space':
+          e.preventDefault();
+          hardDrop();
+          break;
+        case 'KeyP':
+          togglePause();
+          break;
+      }
+    });
+    
+    document.getElementById('pauseBtn').addEventListener('click', togglePause);
+    document.getElementById('restartBtn').addEventListener('click', restart);
+    
+    // Start game
+    document.addEventListener('DOMContentLoaded', () => {
+      init();
+    });
+  </script>

@@ -1,0 +1,603 @@
+<% content_for :head do %>
+    <%= javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js' %>
+    <style>
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .gradient-bg {
+        background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 30%, #a855f7 60%, #c084fc 100%);
+        min-height: 100vh;
+      }
+      
+      .crystal-ball {
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.8), rgba(147, 197, 253, 0.4), rgba(79, 70, 229, 0.8));
+        position: relative;
+        cursor: pointer;
+        transition: all 0.4s ease;
+        box-shadow: 
+          0 25px 50px rgba(0, 0, 0, 0.3),
+          inset 0 0 0 3px rgba(255, 255, 255, 0.2),
+          inset 0 0 40px rgba(255, 255, 255, 0.1),
+          0 0 60px rgba(168, 85, 247, 0.4);
+        animation: mysticalGlow 4s ease-in-out infinite;
+      }
+      
+      @keyframes mysticalGlow {
+        0%, 100% { 
+          box-shadow: 
+            0 25px 50px rgba(0, 0, 0, 0.3),
+            inset 0 0 0 3px rgba(255, 255, 255, 0.2),
+            inset 0 0 40px rgba(255, 255, 255, 0.1),
+            0 0 60px rgba(168, 85, 247, 0.4);
+        }
+        50% { 
+          box-shadow: 
+            0 30px 60px rgba(0, 0, 0, 0.4),
+            inset 0 0 0 3px rgba(255, 255, 255, 0.3),
+            inset 0 0 50px rgba(255, 255, 255, 0.2),
+            0 0 80px rgba(168, 85, 247, 0.6);
+        }
+      }
+      
+      .crystal-ball:hover {
+        transform: scale(1.05);
+        box-shadow: 
+          0 35px 70px rgba(0, 0, 0, 0.4),
+          inset 0 0 0 4px rgba(255, 255, 255, 0.3),
+          inset 0 0 60px rgba(255, 255, 255, 0.2),
+          0 0 100px rgba(168, 85, 247, 0.7);
+      }
+      
+      .crystal-ball.revealing {
+        animation: crystalReveal 2s ease-in-out;
+      }
+      
+      @keyframes crystalReveal {
+        0% { transform: scale(1); }
+        20% { transform: scale(1.1) rotate(5deg); }
+        40% { transform: scale(0.95) rotate(-5deg); }
+        60% { transform: scale(1.05) rotate(3deg); }
+        80% { transform: scale(0.98) rotate(-2deg); }
+        100% { transform: scale(1) rotate(0deg); }
+      }
+      
+      .crystal-base {
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+        height: 40px;
+        background: linear-gradient(45deg, #374151, #1f2937);
+        border-radius: 50%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      
+      .mystic-swirls {
+        position: absolute;
+        inset: 20px;
+        border-radius: 50%;
+        background: radial-gradient(circle, transparent 40%, rgba(168, 85, 247, 0.1) 70%);
+        animation: swirl 8s linear infinite;
+      }
+      
+      @keyframes swirl {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .fortune-vision {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 160px;
+        height: 80px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a855f7;
+        font-size: 14px;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.6s ease;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        padding: 12px;
+      }
+      
+      .fortune-vision.visible {
+        opacity: 1;
+      }
+      
+      .category-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(8px);
+        border: 2px solid transparent;
+        border-radius: 16px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .category-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.15);
+      }
+      
+      .category-card.selected {
+        border-color: #a855f7;
+        background: rgba(168, 85, 247, 0.2);
+        box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+      }
+      
+      .category-icon {
+        font-size: 3rem;
+        margin-bottom: 12px;
+        display: block;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      }
+      
+      .floating-orbs {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: radial-gradient(circle, #fbbf24, #f59e0b);
+        border-radius: 50%;
+        animation: floatOrb 6s ease-in-out infinite;
+        box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+      }
+      
+      @keyframes floatOrb {
+        0%, 100% { transform: translateY(0px) scale(1); opacity: 0.7; }
+        50% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+      }
+      
+      .question-input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        backdrop-filter: blur(5px);
+      }
+      
+      .question-input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+      
+      .question-input:focus {
+        outline: none;
+        border-color: #a855f7;
+        background: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+      }
+      
+      .cat-companion {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        font-size: 3rem;
+        animation: float 3s ease-in-out infinite;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-12px); }
+      }
+      
+      .fortune-reveal {
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        border: 2px solid #a855f7;
+        border-radius: 20px;
+        padding: 24px;
+        margin-top: 20px;
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+        transition: all 0.6s ease;
+        box-shadow: 0 10px 40px rgba(168, 85, 247, 0.4);
+      }
+      
+      .fortune-reveal.visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      
+      .button-glow {
+        background: linear-gradient(45deg, #7c3aed, #a855f7);
+        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+        transition: all 0.3s ease;
+      }
+      
+      .button-glow:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+      }
+      
+      .mystical-text {
+        background: linear-gradient(45deg, #fbbf24, #f59e0b, #fbbf24);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: shimmer 3s ease-in-out infinite;
+      }
+      
+      @keyframes shimmer {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+    .fortune-teller-container {
+        position: relative;
+        width: 300px;
+        height: 300px;
+        perspective: 1000px;
+        margin: 0 auto 30px;
+      }
+      
+      .fortune-teller {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.6s;
+        transform-origin: center center;
+      }
+      
+      .fortune-teller.flipped {
+        transform: rotateY(180deg);
+      }
+      
+      .paper-layer {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #f3e7c9, #f9f3e9);
+        box-shadow: 
+          0 10px 30px rgba(0,0,0,0.2),
+          inset 0 0 0 1px rgba(0,0,0,0.1);
+        backface-visibility: hidden;
+        border-radius: 5px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        overflow: hidden;
+      }
+      
+      .outer-layer {
+        z-index: 2;
+      }
+      
+      .inner-layer {
+        transform: rotateY(180deg);
+        z-index: 1;
+      }
+      
+      .quadrant {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(0,0,0,0.1);
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #4c1d95;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      }
+      
+      .quadrant:hover {
+        background: rgba(255,255,255,0.5);
+        transform: scale(1.05);
+      }
+      
+      .color-1 { background: #FFCACA; }
+      .color-2 { background: #CAFFD0; }
+      .color-3 { background: #CAE4FF; }
+      .color-4 { background: #FFEACA; }
+      
+      .fortune-text {
+        font-size: 0.9rem;
+        padding: 15px;
+        text-align: center;
+        color: #333;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .flap-label {
+        position: absolute;
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: #7c3aed;
+        text-transform: uppercase;
+      }
+      
+      .top-flap { top: 10px; left: 50%; transform: translateX(-50%); }
+      .right-flap { top: 50%; right: 10px; transform: translateY(-50%); }
+      .bottom-flap { bottom: 10px; left: 50%; transform: translateX(-50%); }
+      .left-flap { top: 50%; left: 10px; transform: translateY(-50%); }
+      
+      .instruction {
+        text-align: center;
+        color: white;
+        margin-top: 20px;
+        font-size: 1.1rem;
+        min-height: 2.5rem;
+      }
+      
+      .folding-animation {
+        animation: foldAnimation 0.8s ease-in-out;
+      }
+      
+      @keyframes foldAnimation {
+        0% { transform: scale(1) rotate(0deg); }
+        20% { transform: scale(0.95) rotate(5deg); }
+        40% { transform: scale(1.05) rotate(-5deg); }
+        60% { transform: scale(0.98) rotate(3deg); }
+        80% { transform: scale(1.02) rotate(-2deg); }
+        100% { transform: scale(1) rotate(0deg); }
+      }
+      
+      .mystical-border {
+        position: absolute;
+        inset: -10px;
+        border: 2px solid rgba(168, 85, 247, 0.4);
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+        animation: borderPulse 3s infinite;
+        pointer-events: none;
+      }
+      
+      @keyframes borderPulse {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+      }
+    </style>
+  <% end %>
+  
+  <div class="min-h-screen gradient-bg relative overflow-hidden">
+    <!-- ... (keep floating orbs and Three.js canvas) ... -->
+    
+    <!-- Main Content -->
+    <div class="relative z-10 min-h-screen flex flex-col items-center justify-center p-6">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-5xl font-bold text-white mb-3">📜 Mystic Fortune Teller 📜</h1>
+        <p class="text-white/90 text-xl mystical-text">Unfold your destiny with this magical paper oracle...</p>
+      </div>
+      
+      <!-- Category Selection (keep same) -->
+      
+      <!-- Question Input (keep same) -->
+      
+      <!-- Paper Fortune Teller -->
+      <div class="glass-effect rounded-2xl p-8 max-w-md w-full mb-8 relative">
+        <div class="mystical-border"></div>
+        
+        <div class="fortune-teller-container">
+          <div class="fortune-teller" id="fortuneTeller">
+            <!-- Outer Layer (Colors) -->
+            <div class="paper-layer outer-layer">
+              <div class="quadrant color-1" data-color="1" onclick="selectColor(1)">1</div>
+              <div class="quadrant color-2" data-color="2" onclick="selectColor(2)">2</div>
+              <div class="quadrant color-3" data-color="3" onclick="selectColor(3)">3</div>
+              <div class="quadrant color-4" data-color="4" onclick="selectColor(4)">4</div>
+              
+              <div class="flap-label top-flap">Love</div>
+              <div class="flap-label right-flap">Wealth</div>
+              <div class="flap-label bottom-flap">Health</div>
+              <div class="flap-label left-flap">Wisdom</div>
+            </div>
+            
+            <!-- Inner Layer (Numbers) -->
+            <div class="paper-layer inner-layer">
+              <div class="quadrant" data-number="1" onclick="selectNumber(1)"><span class="fortune-text">Your journey begins with courage</span></div>
+              <div class="quadrant" data-number="2" onclick="selectNumber(2)"><span class="fortune-text">New opportunities await</span></div>
+              <div class="quadrant" data-number="3" onclick="selectNumber(3)"><span class="fortune-text">Trust your intuition</span></div>
+              <div class="quadrant" data-number="4" onclick="selectNumber(4)"><span class="fortune-text">Change is coming</span></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="instruction" id="instruction">
+          Choose a color to begin your fortune...
+        </div>
+      </div>
+      
+      <!-- Fortune Reveal Card (keep same) -->
+      
+      <!-- Navigation (keep same) -->
+    </div>
+    
+    <!-- Cat Companion (keep same) -->
+  </div>
+  
+  <script>
+    // ... (keep existing Three.js code) ...
+    
+    // Fortune Teller Game State
+    let selectedCategory = '<%= @selected_category %>';
+    let currentFortune = '';
+    let gameState = 'color'; // 'color' -> 'number' -> 'reveal'
+    let selectedColor = null;
+    let selectedNumber = null;
+    
+    // Enhanced fortune database with category-based fortunes
+    const fortuneDatabase = {
+      general: [
+        "A period of growth awaits you. Trust your journey.",
+        "The winds of change bring new opportunities.",
+        "Your intuition is your guide. Listen carefully.",
+        "Patience will lead you to your destination.",
+        "A meaningful connection is coming your way."
+      ],
+      love: [
+        "Love finds you when you least expect it.",
+        "Open your heart to new possibilities.",
+        "Communication is key to harmony.",
+        "Self-love attracts others naturally.",
+        "A past connection may reappear."
+      ],
+      career: [
+        "Your talents will be recognized soon.",
+        "A new opportunity is on the horizon.",
+        "Collaboration brings success.",
+        "Trust your professional instincts.",
+        "Your hard work creates lasting success."
+      ],
+      wellness: [
+        "Your body seeks rest and gentleness.",
+        "Small wellness choices create big changes.",
+        "Mental clarity comes through movement.",
+        "Nourish your soul as well as your body.",
+        "Balance is a daily practice. Be patient."
+      ]
+    };
+    
+    function selectCategory(categoryId) {
+      selectedCategory = categoryId;
+      document.querySelectorAll('.category-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      document.querySelector(`[data-category="${categoryId}"]`).classList.add('selected');
+      resetFortuneTeller();
+    }
+    
+    function selectColor(color) {
+      if (gameState !== 'color') return;
+      
+      selectedColor = color;
+      document.querySelectorAll('.quadrant[data-color]').forEach(el => {
+        el.style.pointerEvents = 'none';
+      });
+      
+      document.getElementById('fortuneTeller').classList.add('folding-animation');
+      document.getElementById('instruction').textContent = `You chose ${getColorName(color)}. Now select a number...`;
+      
+      setTimeout(() => {
+        document.getElementById('fortuneTeller').classList.add('flipped');
+        document.getElementById('fortuneTeller').classList.remove('folding-animation');
+        gameState = 'number';
+      }, 800);
+    }
+    
+    function selectNumber(number) {
+      if (gameState !== 'number') return;
+      
+      selectedNumber = number;
+      document.querySelectorAll('.quadrant[data-number]').forEach(el => {
+        el.style.pointerEvents = 'none';
+      });
+      
+      document.getElementById('fortuneTeller').classList.add('folding-animation');
+      document.getElementById('instruction').textContent = `Revealing your fortune...`;
+      
+      setTimeout(() => {
+        revealFortune();
+        document.getElementById('fortuneTeller').classList.remove('folding-animation');
+      }, 1000);
+    }
+    
+    function getColorName(color) {
+      const colors = {
+        1: 'Red',
+        2: 'Green',
+        3: 'Blue',
+        4: 'Yellow'
+      };
+      return colors[color] || 'Mystic';
+    }
+    
+    function revealFortune() {
+      const fortunes = fortuneDatabase[selectedCategory] || fortuneDatabase.general;
+      const randomIndex = Math.floor(Math.random() * fortunes.length);
+      currentFortune = fortunes[randomIndex];
+      
+      // Update fortune reveal card
+      document.getElementById('fullFortune').textContent = currentFortune;
+      document.getElementById('fortuneCategory').innerHTML = 
+        `${getCategoryIcon(selectedCategory)} ${getCategoryName(selectedCategory)}`;
+      
+      const fortuneReveal = document.getElementById('fortuneReveal');
+      fortuneReveal.classList.add('visible');
+      
+      gameState = 'reveal';
+    }
+    
+    function getCategoryIcon(category) {
+      const icons = {
+        general: '🌟',
+        love: '💕',
+        career: '💼',
+        wellness: '🌿'
+      };
+      return icons[category] || '🔮';
+    }
+    
+    function getCategoryName(category) {
+      const names = {
+        general: 'General Guidance',
+        love: 'Love & Relationships',
+        career: 'Career & Goals',
+        wellness: 'Health & Wellness'
+      };
+      return names[category] || 'Mystic Insight';
+    }
+    
+    function resetFortuneTeller() {
+      document.getElementById('fortuneTeller').classList.remove('flipped');
+      document.querySelectorAll('.quadrant').forEach(el => {
+        el.style.pointerEvents = 'auto';
+      });
+      document.getElementById('instruction').textContent = 'Choose a color to begin your fortune...';
+      gameState = 'color';
+      selectedColor = null;
+      selectedNumber = null;
+      
+      const fortuneReveal = document.getElementById('fortuneReveal');
+      fortuneReveal.classList.remove('visible');
+    }
+    
+    function seekNewFortune() {
+      resetFortuneTeller();
+      document.getElementById('fortuneQuestion').value = '';
+      document.getElementById('fortuneQuestion').focus();
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initThreeJS();
+      
+      const questionInput = document.getElementById('fortuneQuestion');
+      questionInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (questionInput.value.trim() !== "") {
+            resetFortuneTeller();
+          }
+        }
+      });
+      
+      if (selectedCategory) {
+        selectCategory(selectedCategory);
+      }
+      
+      questionInput.focus();
+    });
+  </script>

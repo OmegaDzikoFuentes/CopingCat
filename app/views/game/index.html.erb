@@ -1,39 +1,237 @@
-<div class="min-h-screen relative">
+<% content_for :head do %>
+  <%= javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js' %>
+  <style>
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .cat-emoji {
+      font-size: 4rem;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+    
+    .game-button {
+      background: linear-gradient(45deg, #ff6b6b, #ffa726);
+      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .game-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+    }
+    
+    .stats-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+  </style>
+<% end %>
+
+<div class="min-h-screen relative gradient-bg">
   <!-- Three.js Canvas -->
   <canvas id="catCanvas" class="absolute inset-0 w-full h-full"></canvas>
   
   <!-- Welcome Screen -->
   <div class="relative z-10 min-h-screen flex flex-col justify-center items-center p-6">
     <div class="glass-effect rounded-3xl p-8 max-w-md w-full text-center">
-      <div class="text-6xl mb-4 animate-bounce">😸</div>
+      <div class="cat-emoji mb-4 animate-float">😸</div>
       <h1 class="text-4xl font-bold text-white mb-4">
-        Hello, <%= @user.name %>!
+        Hello, <%= @user.name.present? ? @user.name : 'Friend' %>!
       </h1>
       <p class="text-white/80 text-lg mb-8">
         Im your Coping Cat, here to help you navigate your feelings today!
       </p>
       
-      <!-- Display wellness score and streak -->
+      <!-- Display wellness metrics -->
       <div class="flex justify-around mb-8 text-white">
-        <div class="text-center">
-          <div class="text-2xl font-bold"><%= @user.wellness_score %></div>
+        <div class="stats-card rounded-lg p-4 text-center">
+          <div class="text-2xl font-bold"><%= calculate_wellness_score %></div>
           <div class="text-sm opacity-80">Wellness Score</div>
         </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold"><%= @user.current_streak %></div>
+        <div class="stats-card rounded-lg p-4 text-center">
+          <div class="text-2xl font-bold"><%= calculate_streak %></div>
           <div class="text-sm opacity-80">Day Streak 🔥</div>
         </div>
       </div>
       
       <%= link_to game_questions_path, 
-    class: "bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 shadow-lg" do %>
-  Let's Begin! 🐾
-<% end %>
+          class: "game-button text-white px-8 py-4 rounded-full font-semibold text-lg inline-block w-full text-decoration-none" do %>
+        Lets Begin! 🐾
+      <% end %>
     </div>
+    
+    <!-- Recent Activity -->
+    <% if @recent_episodes.any? %>
+      <div class="glass-effect rounded-2xl p-6 max-w-md w-full mt-4 text-center">
+        <h3 class="text-white font-semibold mb-3">Recent Activities</h3>
+        <div class="text-white/70 text-sm space-y-2">
+          <% @recent_episodes.each do |episode| %>
+            <div class="flex items-center justify-between">
+              <span><%= episode.emotion.name.capitalize %> - <%= episode.intensity %>/10</span>
+              <span class="text-xs"><%= time_ago_in_words(episode.created_at) %> ago</span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    
+    <!-- Available Games -->
+    <% if @available_games.any? %>
+      <div class="glass-effect rounded-2xl p-6 max-w-md w-full mt-4">
+        <h3 class="text-white font-semibold mb-3 text-center">Quick Access</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <% @available_games.take(4).each do |game| %>
+            <%= link_to game[:path], 
+                class: "text-white/80 text-sm p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-center block text-decoration-none" do %>
+              <div class="font-medium"><%= game[:name] %></div>
+              <div class="text-xs mt-1 opacity-70"><%= game[:description] %></div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   </div>
 </div>
 
 <script>
+  let scene, camera, renderer, cat, ambientLight, directionalLight;
+  
+  function initThreeJS() {
+    // Create scene
+    scene = new THREE.Scene();
+    scene.background = null; // Transparent background
+    
+    // Create camera
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+    
+    // Create renderer
+    const canvas = document.getElementById('catCanvas');
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0); // Transparent
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    // Add lighting
+    ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    scene.add(ambientLight);
+    
+    directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 5);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    scene.add(directionalLight);
+    
+    // Create a simple cat-like shape
+    createCat();
+    
+    // Handle window resize
+    window.addEventListener('resize', onWindowResize, false);
+    
+    // Start animation
+    animate();
+  }
+  
+  function createCat() {
+    const catGroup = new THREE.Group();
+    
+    // Cat body (sphere)
+    const bodyGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+    const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0xffa726 });
+    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    body.position.y = -0.5;
+    body.castShadow = true;
+    catGroup.add(body);
+    
+    // Cat head (smaller sphere)
+    const headGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+    const headMaterial = new THREE.MeshLambertMaterial({ color: 0xffa726 });
+    const head = new THREE.Mesh(headGeometry, headMaterial);
+    head.position.y = 0.7;
+    head.castShadow = true;
+    catGroup.add(head);
+    
+    // Cat ears (cones)
+    const earGeometry = new THREE.ConeGeometry(0.2, 0.4, 8);
+    const earMaterial = new THREE.MeshLambertMaterial({ color: 0xff8f00 });
+    
+    const leftEar = new THREE.Mesh(earGeometry, earMaterial);
+    leftEar.position.set(-0.3, 1.1, 0.2);
+    leftEar.castShadow = true;
+    catGroup.add(leftEar);
+    
+    const rightEar = new THREE.Mesh(earGeometry, earMaterial);
+    rightEar.position.set(0.3, 1.1, 0.2);
+    rightEar.castShadow = true;
+    catGroup.add(rightEar);
+    
+    // Cat eyes (small spheres)
+    const eyeGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+    const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+    
+    const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+    leftEye.position.set(-0.15, 0.8, 0.5);
+    catGroup.add(leftEye);
+    
+    const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+    rightEye.position.set(0.15, 0.8, 0.5);
+    catGroup.add(rightEye);
+    
+    // Cat tail (cylinder)
+    const tailGeometry = new THREE.CylinderGeometry(0.1, 0.05, 1.5, 8);
+    const tailMaterial = new THREE.MeshLambertMaterial({ color: 0xffa726 });
+    const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+    tail.position.set(0, -0.5, -0.8);
+    tail.rotation.x = Math.PI / 6;
+    tail.castShadow = true;
+    catGroup.add(tail);
+    
+    // Position the cat group
+    catGroup.position.set(-3, 0, 0);
+    catGroup.scale.set(0.8, 0.8, 0.8);
+    
+    scene.add(catGroup);
+    cat = catGroup;
+  }
+  
+  function animate() {
+    requestAnimationFrame(animate);
+    
+    // Gentle floating animation for the cat
+    if (cat) {
+      cat.position.y = Math.sin(Date.now() * 0.001) * 0.2;
+      cat.rotation.y = Math.sin(Date.now() * 0.0005) * 0.1;
+    }
+    
+    renderer.render(scene, camera);
+  }
+  
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+  
+  // Initialize Three.js when page loads
   document.addEventListener('DOMContentLoaded', () => {
     initThreeJS();
   });

@@ -1,0 +1,451 @@
+<% content_for :head do %>
+    <%= javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js' %>
+    <style>
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .gradient-bg {
+        background: linear-gradient(135deg, #2d1b69 0%, #11998e 50%, #38ef7d 100%);
+        min-height: 100vh;
+      }
+      
+      .magic-ball {
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #4a5568, #1a202c);
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 
+          0 20px 40px rgba(0, 0, 0, 0.3),
+          inset 0 0 0 4px rgba(255, 255, 255, 0.1),
+          inset 0 0 50px rgba(255, 255, 255, 0.05);
+      }
+      
+      .magic-ball:hover {
+        transform: scale(1.05);
+        box-shadow: 
+          0 25px 50px rgba(0, 0, 0, 0.4),
+          inset 0 0 0 4px rgba(255, 255, 255, 0.2),
+          inset 0 0 60px rgba(255, 255, 255, 0.1);
+      }
+      
+      .magic-ball.shaking {
+        animation: shake 0.8s ease-in-out;
+      }
+      
+      @keyframes shake {
+        0%, 100% { transform: translateX(0) rotate(0deg); }
+        10% { transform: translateX(-10px) rotate(-2deg); }
+        20% { transform: translateX(10px) rotate(2deg); }
+        30% { transform: translateX(-10px) rotate(-2deg); }
+        40% { transform: translateX(10px) rotate(2deg); }
+        50% { transform: translateX(-5px) rotate(-1deg); }
+        60% { transform: translateX(5px) rotate(1deg); }
+        70% { transform: translateX(-5px) rotate(-1deg); }
+        80% { transform: translateX(5px) rotate(1deg); }
+        90% { transform: translateX(-2px) rotate(-0.5deg); }
+      }
+      
+      .answer-window {
+        position: absolute;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 60px;
+        background: linear-gradient(45deg, #1a365d, #2d3748);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        border: 2px solid #4299e1;
+        box-shadow: 0 0 20px rgba(66, 153, 225, 0.5);
+      }
+      
+      .answer-window.visible {
+        opacity: 1;
+      }
+      
+      .sparkle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #ffd700;
+        border-radius: 50%;
+        animation: sparkle 2s infinite ease-in-out;
+      }
+      
+      @keyframes sparkle {
+        0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+        50% { opacity: 1; transform: scale(1) rotate(180deg); }
+      }
+      
+      .question-input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        placeholder-color: rgba(255, 255, 255, 0.7);
+      }
+      
+      .question-input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+      
+      .question-input:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.6);
+        background: rgba(255, 255, 255, 0.15);
+      }
+      
+      .cat-companion {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        font-size: 3rem;
+        animation: float 3s ease-in-out infinite;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+      
+      .wisdom-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.5s ease;
+      }
+      
+      .wisdom-card.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      
+      .button-glow {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+      }
+      
+      .button-glow:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      }
+    </style>
+  <% end %>
+  
+  <div class="min-h-screen gradient-bg relative overflow-hidden">
+    <!-- Three.js Canvas -->
+    <canvas id="magicCanvas" class="absolute inset-0 w-full h-full"></canvas>
+    
+    <!-- Main Content -->
+    <div class="relative z-10 min-h-screen flex flex-col items-center justify-center p-6">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-white mb-2">🔮 Magic 8-Ball 🔮</h1>
+        <p class="text-white/80 text-lg">Ask a question and let the mystical 8-ball guide you!</p>
+      </div>
+      
+      <!-- Question Input -->
+      <div class="glass-effect rounded-2xl p-6 max-w-md w-full mb-8">
+        <label class="block text-white font-medium mb-3">What's on your mind?</label>
+        <input 
+          type="text" 
+          id="questionInput"
+          class="question-input w-full px-4 py-3 rounded-lg text-lg"
+          placeholder="Ask about your feelings, day, or future..."
+          maxlength="100"
+        >
+        <div class="text-white/60 text-sm mt-2">
+          💡 Try: "Will I feel better tomorrow?" or "Should I try that new coping strategy?"
+        </div>
+      </div>
+      
+      <!-- Magic 8-Ball -->
+      <div class="relative">
+        <div class="magic-ball" id="magicBall">
+          <!-- Sparkle effects -->
+          <div class="sparkle" style="top: 20%; left: 25%;"></div>
+          <div class="sparkle" style="top: 30%; right: 20%; animation-delay: 0.5s;"></div>
+          <div class="sparkle" style="bottom: 40%; left: 15%; animation-delay: 1s;"></div>
+          <div class="sparkle" style="bottom: 25%; right: 30%; animation-delay: 1.5s;"></div>
+          
+          <!-- Answer Window -->
+          <div class="answer-window" id="answerWindow">
+            <div id="answerText">Shake me!</div>
+          </div>
+          
+          <!-- 8 Number -->
+          <div class="absolute top-12 left-1/2 transform -translate-x-1/2 text-white text-6xl font-bold opacity-20">
+            8
+          </div>
+        </div>
+        
+        <!-- Instruction -->
+        <div class="text-center mt-6">
+          <p class="text-white/80 text-lg">Click the magic ball to reveal your answer!</p>
+        </div>
+      </div>
+      
+      <!-- Wisdom Card -->
+      <div class="wisdom-card max-w-md w-full" id="wisdomCard">
+        <h3 class="text-white font-semibold mb-2">✨ Gentle Reminder</h3>
+        <p class="text-white/90 text-sm" id="wisdomText">
+          Remember, you have the power to shape your emotional journey. The magic is within you! 🌟
+        </p>
+      </div>
+      
+      <!-- Navigation -->
+      <div class="flex gap-4 mt-8">
+        <%= link_to game_root_path, 
+            class: "button-glow text-white px-6 py-3 rounded-full font-medium text-decoration-none" do %>
+          🏠 Game Hub
+        <% end %>
+        <button 
+          onclick="askAnother()" 
+          class="button-glow text-white px-6 py-3 rounded-full font-medium"
+        >
+          🔄 Ask Again
+        </button>
+      </div>
+    </div>
+    
+    <!-- Cat Companion -->
+    <div class="cat-companion">😺</div>
+  </div>
+  
+  <script>
+    let scene, camera, renderer, particles = [];
+    
+    // Magic 8-Ball responses - wellness focused
+    const magicResponses = [
+      // Positive & Encouraging
+      "Yes, trust your inner strength! 💪",
+      "Absolutely! You've got this! ✨",
+      "The signs point to yes! 🌟",
+      "Without a doubt! 🌈",
+      "Yes, and remember to be kind to yourself 💚",
+      "Definitely! Take it one step at a time 🐾",
+      
+      // Thoughtful & Reflective  
+      "Ask your heart, it knows the answer 💗",
+      "The answer lies within your wisdom 🧠",
+      "Focus on your breathing and try again 🫁",
+      "What would your best self say? 🤔",
+      "Trust the process, trust yourself 🌱",
+      "Listen to your inner voice 👂",
+      
+      // Gentle Guidance
+      "Maybe, but be gentle with yourself 🤗",
+      "Not right now, but that's okay 🌙",
+      "Try a different approach 🔄",
+      "Give it time to unfold 🕐",
+      "Ask again when you feel centered 🧘‍♀️",
+      "The timing might not be right ⏰",
+      
+      // Supportive & Caring
+      "You're stronger than you know 💎",
+      "Every small step counts 👣",
+      "Your feelings are valid 🤝",
+      "Progress, not perfection 📈",
+      "You deserve peace and happiness 🕊️",
+      "Believe in your healing journey 🌸"
+    ];
+    
+    const wisdomMessages = [
+      "Your emotions are temporary visitors - acknowledge them, but don't let them stay forever.",
+      "Every breath is a new opportunity to find your center.",
+      "You are learning and growing with each experience.",
+      "Self-compassion is your superpower - use it freely.",
+      "Small acts of self-care create big changes over time.",
+      "Your journey is unique, and that's exactly as it should be.",
+      "Trust in your ability to navigate life's ups and downs.",
+      "Every moment of mindfulness is a gift to yourself."
+    ];
+    
+    function initThreeJS() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 5;
+      
+      const canvas = document.getElementById('magicCanvas');
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x000000, 0);
+      
+      // Create floating magical particles
+      createMagicalParticles();
+      
+      window.addEventListener('resize', onWindowResize, false);
+      animate();
+    }
+    
+    function createMagicalParticles() {
+      const particleCount = 50;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+      
+      for (let i = 0; i < particleCount * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 20;
+        positions[i + 1] = (Math.random() - 0.5) * 20;
+        positions[i + 2] = (Math.random() - 0.5) * 20;
+        
+        // Magical colors - purple, blue, gold
+        const color = new THREE.Color();
+        const colorChoice = Math.random();
+        if (colorChoice < 0.33) {
+          color.setHSL(0.75, 0.8, 0.6); // Purple
+        } else if (colorChoice < 0.66) {
+          color.setHSL(0.6, 0.8, 0.6);  // Blue
+        } else {
+          color.setHSL(0.15, 0.9, 0.7); // Gold
+        }
+        
+        colors[i] = color.r;
+        colors[i + 1] = color.g;
+        colors[i + 2] = color.b;
+      }
+      
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      
+      const material = new THREE.PointsMaterial({
+        size: 0.1,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8
+      });
+      
+      const particleSystem = new THREE.Points(geometry, material);
+      scene.add(particleSystem);
+      particles.push(particleSystem);
+    }
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // Animate particles
+      particles.forEach(particle => {
+        particle.rotation.x += 0.001;
+        particle.rotation.y += 0.001;
+        
+        const positions = particle.geometry.attributes.position.array;
+        for (let i = 1; i < positions.length; i += 3) {
+          positions[i] += Math.sin(Date.now() * 0.001 + i) * 0.001;
+        }
+        particle.geometry.attributes.position.needsUpdate = true;
+      });
+      
+      renderer.render(scene, camera);
+    }
+    
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    // Magic 8-Ball functionality
+    function shakeBall() {
+      const ball = document.getElementById('magicBall');
+      const answerWindow = document.getElementById('answerWindow');
+      const answerText = document.getElementById('answerText');
+      const wisdomCard = document.getElementById('wisdomCard');
+      const wisdomText = document.getElementById('wisdomText');
+      const questionInput = document.getElementById('questionInput');
+      
+      // Don't shake if already shaking
+      if (ball.classList.contains('shaking')) {
+        return;
+      }
+      
+      // Hide answer initially
+      answerWindow.classList.remove('visible');
+      
+      // Add shaking animation
+      ball.classList.add('shaking');
+      
+      // Show "thinking" message
+      setTimeout(() => {
+        answerText.textContent = "🔮 Consulting the spirits...";
+        answerWindow.classList.add('visible');
+      }, 200);
+      
+      // Show final answer
+      setTimeout(() => {
+        const randomResponse = magicResponses[Math.floor(Math.random() * magicResponses.length)];
+        const randomWisdom = wisdomMessages[Math.floor(Math.random() * wisdomMessages.length)];
+        
+        answerText.textContent = randomResponse;
+        wisdomText.textContent = randomWisdom;
+        wisdomCard.classList.add('visible');
+        
+        // Remove shaking class
+        ball.classList.remove('shaking');
+      }, 1500);
+    }
+    
+    function askAnother() {
+      const answerWindow = document.getElementById('answerWindow');
+      const answerText = document.getElementById('answerText');
+      const wisdomCard = document.getElementById('wisdomCard');
+      const questionInput = document.getElementById('questionInput');
+      
+      // Reset everything
+      answerWindow.classList.remove('visible');
+      wisdomCard.classList.remove('visible');
+      answerText.textContent = "Shake me!";
+      questionInput.value = "";
+      questionInput.focus();
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      initThreeJS();
+      
+      const magicBall = document.getElementById('magicBall');
+      const questionInput = document.getElementById('questionInput');
+      
+      // Ball click handler
+      magicBall.addEventListener('click', () => {
+        const question = questionInput.value.trim();
+        if (question === "") {
+          alert("Please ask a question first! 🤔");
+          questionInput.focus();
+          return;
+        }
+        shakeBall();
+      });
+      
+      // Enter key handler
+      questionInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const question = questionInput.value.trim();
+          if (question !== "") {
+            shakeBall();
+          }
+        }
+      });
+      
+      // Focus input on load
+      questionInput.focus();
+    });
+  </script>
